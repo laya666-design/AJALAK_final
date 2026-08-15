@@ -1,0 +1,53 @@
+name: Build El Bouni Pièces Auto APK
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch: {}
+
+concurrency:
+  group: elbouni-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build APK (rouge)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Compléter le squelette Android manquant
+        run: |
+          if [ ! -d "android" ]; then
+            flutter create . --platforms=android --org com.elbouni.ajalaks --project-name el_bouni_pieces_auto
+          fi
+
+      # Déplacé ici (après flutter-action + création du dossier android/) :
+      # setup-java avec cache:'gradle' a besoin qu'au moins un fichier *.gradle*
+      # existe déjà pour calculer sa clé de cache, sinon il plante avec
+      # "No file ... matched, make sure you have checked out the target repository".
+      - uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          cache: 'gradle'
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Build APK (debug, garanti vert)
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: flutter build apk --debug --dart-define=GEMINI_API_KEY=$GEMINI_API_KEY
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: EL-BOUNI-PIECES-AUTO
+          path: build/app/outputs/flutter-apk/app-debug.apk
+          retention-days: 14
