@@ -28,13 +28,6 @@ jobs:
           test -f android/gradle/wrapper/gradle-wrapper.properties \
             && echo "OK : gradle-wrapper.properties présent" \
             || echo "ATTENTION : gradle-wrapper.properties toujours absent"
-- name: Compléter le squelette Android manquant
-        run: |
-          flutter create . --platforms=android --org com.elbouni.ajalaks --project-name el_bouni_pieces_auto
-          echo "--- Vérification du squelette Gradle ---"
-          test -f android/gradle/wrapper/gradle-wrapper.properties \
-            && echo "OK : gradle-wrapper.properties présent" \
-            || echo "ATTENTION : gradle-wrapper.properties toujours absent"
 
       - name: Activer Firebase (Google Services)
         run: |
@@ -44,6 +37,7 @@ jobs:
           cat android/settings.gradle.kts
           echo "--- app/build.gradle.kts (plugins) ---"
           head -n 10 android/app/build.gradle.kts
+
       # setup-java tourne après flutter-action + création du squelette Android,
       # car cache:'gradle' a besoin qu'un fichier *.gradle* existe déjà pour hasher le cache.
       - uses: actions/setup-java@v4
