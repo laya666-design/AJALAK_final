@@ -1,25 +1,19 @@
 import 'dart:convert';
 import 'dart:io';
-import 'package:google_generative_ai/google_generative_ai.dart';
+import 'package:firebase_ai/firebase_ai.dart';
 
-/// Version finale - Rouge only
+/// Version Firebase AI Logic - Rouge only
 /// 1. JSON pur force via responseMimeType: application/json
 /// 2. Securite produit: Gemini ne doit JAMAIS inventer de magasins/tels
 
 class GeminiService {
-  final String apiKey;
-  GeminiService({String? apiKey}) 
-      : apiKey = apiKey ?? const String.fromEnvironment('GEMINI_API_KEY', defaultValue: '');
-
   GenerativeModel _getJsonModel() {
-    return GenerativeModel(
+    return FirebaseAI.googleAI().generativeModel(
       model: 'gemini-2.5-flash',
-      apiKey: apiKey.isEmpty ? 'dummy' : apiKey,
       generationConfig: GenerationConfig(
         responseMimeType: 'application/json',
         temperature: 0.2,
       ),
-      // Consigne systeme globale
       systemInstruction: Content.system(
         'Tu es un expert pieces auto et assurance pour l Algerie. '
         'REGLE CRITIQUE: Tu ne dois JAMAIS inventer de nom de magasin, adresse ou numero de telephone. '
@@ -30,10 +24,7 @@ class GeminiService {
     );
   }
 
-  // 1. Assurance - JSON garanti
   Future<Map<String, dynamic>> analyzeInsuranceCard(File file) async {
-    if (apiKey.isEmpty) return {'error': 'CLE MANQUANTE', 'text': 'Ajoute GEMINI_API_KEY en secret GitHub'};
-
     try {
       final bytes = await file.readAsBytes();
       final model = _getJsonModel();
@@ -56,18 +47,15 @@ REGLE: magasins doit toujours etre un tableau vide [].
 ''';
 
       final res = await model.generateContent([
-        Content.multi([TextPart(prompt), DataPart('image/jpeg', bytes)])
+        Content.multi([TextPart(prompt), InlineDataPart('image/jpeg', bytes)])
       ]);
 
       final raw = res.text ?? '{}';
-      // Parsing securise grace au responseMimeType
       try {
         final json = jsonDecode(raw) as Map<String, dynamic>;
-        // Force securite produit: on ecrase si Gemini a quand meme invente
         json['magasins'] = [];
         return json;
       } catch (_) {
-        // Si Gemini a quand meme mis du markdown malgre le mimeType
         final cleaned = raw.replaceAll('```json', '').replaceAll('```', '').trim();
         final json = jsonDecode(cleaned) as Map<String, dynamic>;
         json['magasins'] = [];
@@ -78,10 +66,7 @@ REGLE: magasins doit toujours etre un tableau vide [].
     }
   }
 
-  // 2. Piece auto - JSON garanti + pas d invention de magasins
   Future<Map<String, dynamic>> analyzeCarPart(File file) async {
-    if (apiKey.isEmpty) return {'error': 'CLE MANQUANTE', 'text': 'Secret manquant'};
-
     try {
       final bytes = await file.readAsBytes();
       final model = _getJsonModel();
@@ -104,13 +89,13 @@ REGLE CRITIQUE: magasins = [] toujours vide. Ne jamais inventer de telephone.
 ''';
 
       final res = await model.generateContent([
-        Content.multi([TextPart(prompt), DataPart('image/jpeg', bytes)])
+        Content.multi([TextPart(prompt), InlineDataPart('image/jpeg', bytes)])
       ]);
 
       final raw = res.text ?? '{}';
       try {
         final json = jsonDecode(raw) as Map<String, dynamic>;
-        json['magasins'] = []; // Securite produit
+        json['magasins'] = [];
         return json;
       } catch (_) {
         final cleaned = raw.replaceAll('```json', '').replaceAll('```', '').trim();
