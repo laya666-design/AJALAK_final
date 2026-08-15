@@ -24,7 +24,33 @@ class _PartsScreenState extends State<PartsScreen> {
   CarPartInfo? _part;
 
   Future<void> _pickImage(ImageSource source) async {
-  
+    setState(() {
+      _error = null;
+      _part = null;
+    });
+
+    final picked = await _picker.pickImage(source: source, imageQuality: 90);
+    if (picked == null) return;
+
+    final file = File(picked.path);
+    setState(() {
+      _image = file;
+      _loading = true;
+    });
+
+    try {
+      final json = await _gemini.analyzeCarPart(file);
+      if (json.containsKey('error')) {
+        _error = 'Erreur Gemini : ${json['error']}';
+      } else {
+        _part = CarPartInfo.fromJson(json);
+      }
+    } catch (e) {
+      _error = 'Erreur d\'analyse : $e';
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
 
   Future<void> _call(String tel) async {
     if (tel.isEmpty) return;
