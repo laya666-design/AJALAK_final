@@ -1,53 +1,41 @@
-name: Build El Bouni Pièces Auto APK
-
+name: Generer l'APK (rouge)
 on:
   push:
     branches: [ main ]
-  workflow_dispatch: {}
-
-concurrency:
-  group: elbouni-${{ github.ref }}
-  cancel-in-progress: true
+  workflow_dispatch:
 
 jobs:
   build:
-    name: Build APK (rouge)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
       - uses: subosito/flutter-action@v2
         with:
+          flutter-version: '3.22.2'
           channel: 'stable'
-          cache: true
 
-      - name: Compléter le squelette Android manquant
+      - name: Scaffold Android si besoin
         run: |
-          if [ ! -d "android" ]; then
-            flutter create . --platforms=android --org com.elbouni.ajalaks --project-name el_bouni_pieces_auto
+          if [ ! -f "android/gradlew" ]; then
+            echo "android incomplet -> on regenere"
+            flutter create . --org com.elbouni.annaba --platforms android --project-name el_bouni_pieces_auto
           fi
+          ls -la android/
 
-      # Déplacé ici (après flutter-action + création du dossier android/) :
-      # setup-java avec cache:'gradle' a besoin qu'au moins un fichier *.gradle*
-      # existe déjà pour calculer sa clé de cache, sinon il plante avec
-      # "No file ... matched, make sure you have checked out the target repository".
       - uses: actions/setup-java@v4
         with:
-          distribution: 'temurin'
+          distribution: 'zulu'
           java-version: '17'
-          cache: 'gradle'
 
       - name: Get dependencies
         run: flutter pub get
 
-      - name: Build APK (debug, garanti vert)
-        env:
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-        run: flutter build apk --debug --dart-define=GEMINI_API_KEY=$GEMINI_API_KEY
+      - name: Build APK debug
+        run: flutter build apk --debug --dart-define=APP_VARIANT=v2 --dart-define=GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}
 
-      - name: Upload artifact
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: EL-BOUNI-PIECES-AUTO
+          name: AJALAK-ROUGE-ELBOUNI-APK
           path: build/app/outputs/flutter-apk/app-debug.apk
-          retention-days: 14
