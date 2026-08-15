@@ -1,0 +1,26 @@
+name: el_bouni_pieces_auto
+description: El Bouni Pièces Auto. Assurance OCR + Pièces auto El Bouni.
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  google_mlkit_text_recognition: ^0.13.1
+  firebase_core: ^3.6.0
+  firebase_ai: ^2.3.0
+  image_picker: ^0.8.7+5
+  url_launcher: ^6.1.14
+  cupertino_icons: ^1.0.6
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+flutter:
+  uses-material-design: true
