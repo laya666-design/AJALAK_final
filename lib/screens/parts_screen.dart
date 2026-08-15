@@ -40,16 +40,17 @@ class _PartsScreenState extends State<PartsScreen> {
 
     try {
       final json = await _gemini.analyzeCarPart(file);
-      if (json == null) {
-        _error = 'Pièce non reconnue. Reprends la photo avec un meilleur '
-            'éclairage, cadrée sur la pièce entière.';
-      } else {
-        _part = CarPartInfo.fromJson(json);
-      }
-    } catch (e) {
-      _error = 'Erreur d\'analyse : $e';
-    } finally {
-      if (mounted) setState(() => _loading = false);
+    try {
+  final json = await _gemini.analyzeCarPart(file);
+  if (json.containsKey('error')) {
+    _error = 'Erreur Gemini : ${json['error']}';
+  } else {
+    _part = CarPartInfo.fromJson(json);
+  }
+} catch (e) {
+  _error = 'Erreur d\'analyse : $e';
+} finally {
+  if (mounted) setState(() => _loading = false);
     }
   }
 
