@@ -10,13 +10,11 @@ dependencies:
   flutter:
     sdk: flutter
   firebase_core: ^3.8.0
-  firebase_ai: ^1.0.0 
+  firebase_ai: ^2.3.0
   google_generative_ai: ^0.4.6
   flutter_localizations:
     sdk: flutter
   google_mlkit_text_recognition: ^0.13.1
-  firebase_core: ^3.6.0
-  firebase_ai: ^2.3.0
   image_picker: ^0.8.7+5
   url_launcher: ^6.1.14
   cupertino_icons: ^1.0.6
