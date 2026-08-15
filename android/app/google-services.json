@@ -1,40 +1,21 @@
 {
   "project_info": {
-    "project_number": "1030419687237",
-    "project_id": "ajalaks-el-bouni",
-    "storage_bucket": "ajalaks-el-bouni.firebasestorage.app"
+    "project_number": "994131871524",
+    "project_id": "fakerni-b96c2",
+    "storage_bucket": "fakerni-b96c2.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:1030419687237:android:7b3f91900687e2bfa3002c",
+        "mobilesdk_app_id": "1:994131871524:android:25fd653f1e6da976ea15b1",
         "android_client_info": {
-          "package_name": "com.ajalaks.elbouni.layachi"
+          "package_name": "com.elbouni.ajalaks.el_bouni_pieces_auto"
         }
       },
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyB7Uo11KWLPdppyXdr0oFcv8002ldmLsq8"
-        }
-      ],
-      "services": {
-        "appinvite_service": {
-          "other_platform_oauth_client": []
-        }
-      }
-    },
-    {
-      "client_info": {
-        "mobilesdk_app_id": "1:1030419687237:android:71d5e5a91a4f7a6aa3002c",
-        "android_client_info": {
-          "package_name": "com.ajalaks.elbouniapp"
-        }
-      },
-      "oauth_client": [],
-      "api_key": [
-        {
-          "current_key": "AIzaSyB7Uo11KWLPdppyXdr0oFcv8002ldmLsq8"
+          "current_key": "AIzaSyBHpypQOAQnMmifFtJcX97Mnbrb8ORnd6U"
         }
       ],
       "services": {
