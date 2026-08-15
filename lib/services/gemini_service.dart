@@ -13,7 +13,7 @@ class GeminiService {
 
   GenerativeModel _getJsonModel() {
     return GenerativeModel(
-      model: 'gemini-2.5-flash-lite',
+      model: 'gemini-2.5-flash',
       apiKey: apiKey.isEmpty ? 'dummy' : apiKey,
       generationConfig: GenerationConfig(
         responseMimeType: 'application/json',
