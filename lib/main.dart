@@ -8,17 +8,14 @@ import 'firebase_options.dart';
 import 'config/app_config.dart';
 import 'screens/home_screen.dart';
 
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  // OBLIGATOIRE pour que Gemini (firebase_ai) fonctionne.
-  // En debug : provider "debug" (nécessite d'enregistrer le debug token
-  // affiché au démarrage de l'app, dans Firebase Console > App Check >
-  // Gérer les tokens de débogage).
-  // En release : Play Integrity.
   await FirebaseAppCheck.instance.activate(
     androidProvider:
         kDebugMode ? AndroidProvider.debug : AndroidProvider.playIntegrity,
@@ -40,40 +37,39 @@ class _AjalakAppState extends State<AjalakApp> {
   void initState() {
     super.initState();
     if (kDebugMode) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _showDebugTokenDialog();
-      });
+      Future.delayed(const Duration(seconds: 2), _showDebugTokenDialog);
     }
   }
 
   Future<void> _showDebugTokenDialog() async {
+    String tokenText;
     try {
       final String? token = await FirebaseAppCheck.instance.getToken(true);
-      final String tokenText = token ?? 'Token indisponible';
-      if (!mounted) return;
-      showDialog(
-        context: navigatorKey.currentContext!,
-        builder: (context) => AlertDialog(
-          title: const Text('App Check Debug Token'),
-          content: SelectableText(tokenText),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Clipboard.setData(ClipboardData(text: tokenText));
-                Navigator.of(context).pop();
-              },
-              child: const Text('Copier et fermer'),
-            ),
-          ],
-        ),
-      );
+      tokenText = token ?? 'Token null (aucune erreur mais vide)';
     } catch (e) {
-      // Ignore si échec
+      tokenText = 'ERREUR lors de la récupération du token :\n$e';
     }
-  }
 
-  static final GlobalKey<NavigatorState> navigatorKey =
-      GlobalKey<NavigatorState>();
+    final ctx = navigatorKey.currentContext;
+    if (ctx == null) return;
+
+    showDialog(
+      context: ctx,
+      builder: (context) => AlertDialog(
+        title: const Text('App Check Debug Token'),
+        content: SelectableText(tokenText),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Clipboard.setData(ClipboardData(text: tokenText));
+              Navigator.of(context).pop();
+            },
+            child: const Text('Copier et fermer'),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
