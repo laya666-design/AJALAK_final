@@ -1,5 +1,5 @@
 name: el_bouni_pieces_auto
-description: El Bouni Pièces Auto. Assurance OCR + Pièces auto El Bouni.
+description: El Bouni PiÃ¨ces Auto. Assurance OCR + PiÃ¨ces auto El Bouni.
 publish_to: 'none'
 version: 1.0.0+1
 
@@ -10,6 +10,7 @@ dependencies:
   flutter:
     sdk: flutter
   firebase_core: ^3.8.0
+  firebase_app_check: ^0.3.2
   firebase_ai: ^2.3.0
   flutter_localizations:
     sdk: flutter
