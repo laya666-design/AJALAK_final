@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -14,13 +13,11 @@ void main() async {
   );
 
   // OBLIGATOIRE pour que Gemini (firebase_ai) fonctionne.
-  // En debug : provider "debug" (nÃ©cessite d'enregistrer le debug token
-  // affichÃ© dans les logs, dans Firebase Console > App Check > GÃ©rer les tokens de dÃ©bogage).
-  // En release : Play Integrity (nÃ©cessite que le SHA-256 de la clÃ© de
-  // signature release soit enregistrÃ© dans Firebase Console > Project Settings).
+  // Play Integrity est utilisé en permanence (y compris en debug),
+  // car le SHA-256 du certificat debug est enregistré dans
+  // Firebase Console > App Check > Play Integrity.
   await FirebaseAppCheck.instance.activate(
-    androidProvider:
-        kDebugMode ? AndroidProvider.debug : AndroidProvider.playIntegrity,
+    androidProvider: AndroidProvider.playIntegrity,
   );
 
   runApp(const AjalakApp());
