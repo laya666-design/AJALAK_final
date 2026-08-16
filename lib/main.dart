@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'firebase_options.dart'; // <- va être généré à l'étape 2
+import 'firebase_options.dart';
 import 'config/app_config.dart';
 import 'screens/home_screen.dart';
 
@@ -10,6 +12,17 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
+  // OBLIGATOIRE pour que Gemini (firebase_ai) fonctionne.
+  // En debug : provider "debug" (nÃ©cessite d'enregistrer le debug token
+  // affichÃ© dans les logs, dans Firebase Console > App Check > GÃ©rer les tokens de dÃ©bogage).
+  // En release : Play Integrity (nÃ©cessite que le SHA-256 de la clÃ© de
+  // signature release soit enregistrÃ© dans Firebase Console > Project Settings).
+  await FirebaseAppCheck.instance.activate(
+    androidProvider:
+        kDebugMode ? AndroidProvider.debug : AndroidProvider.playIntegrity,
+  );
+
   runApp(const AjalakApp());
 }
 
