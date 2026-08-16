@@ -48,17 +48,18 @@ class _AjalakAppState extends State<AjalakApp> {
 
   Future<void> _showDebugTokenDialog() async {
     try {
-      final token = await FirebaseAppCheck.instance.getToken(true);
+      final String? token = await FirebaseAppCheck.instance.getToken(true);
+      final String tokenText = token ?? 'Token indisponible';
       if (!mounted) return;
       showDialog(
         context: navigatorKey.currentContext!,
         builder: (context) => AlertDialog(
           title: const Text('App Check Debug Token'),
-          content: SelectableText(token),
+          content: SelectableText(tokenText),
           actions: [
             TextButton(
               onPressed: () {
-                Clipboard.setData(ClipboardData(text: token));
+                Clipboard.setData(ClipboardData(text: tokenText));
                 Navigator.of(context).pop();
               },
               child: const Text('Copier et fermer'),
