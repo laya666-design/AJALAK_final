@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kDebugMode;
+import 'package:flutter/services.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -13,11 +15,13 @@ void main() async {
   );
 
   // OBLIGATOIRE pour que Gemini (firebase_ai) fonctionne.
-  // Play Integrity est utilisé en permanence (y compris en debug),
-  // car le SHA-256 du certificat debug est enregistré dans
-  // Firebase Console > App Check > Play Integrity.
+  // En debug : provider "debug" (nécessite d'enregistrer le debug token
+  // affiché au démarrage de l'app, dans Firebase Console > App Check >
+  // Gérer les tokens de débogage).
+  // En release : Play Integrity.
   await FirebaseAppCheck.instance.activate(
-    androidProvider: AndroidProvider.playIntegrity,
+    androidProvider:
+        kDebugMode ? AndroidProvider.debug : AndroidProvider.playIntegrity,
   );
 
   runApp(const AjalakApp());
@@ -33,9 +37,48 @@ class _AjalakAppState extends State<AjalakApp> {
   final ValueNotifier<bool> isAr = ValueNotifier(false);
 
   @override
+  void initState() {
+    super.initState();
+    if (kDebugMode) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _showDebugTokenDialog();
+      });
+    }
+  }
+
+  Future<void> _showDebugTokenDialog() async {
+    try {
+      final token = await FirebaseAppCheck.instance.getToken(true);
+      if (!mounted) return;
+      showDialog(
+        context: navigatorKey.currentContext!,
+        builder: (context) => AlertDialog(
+          title: const Text('App Check Debug Token'),
+          content: SelectableText(token),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Clipboard.setData(ClipboardData(text: token));
+                Navigator.of(context).pop();
+              },
+              child: const Text('Copier et fermer'),
+            ),
+          ],
+        ),
+      );
+    } catch (e) {
+      // Ignore si échec
+    }
+  }
+
+  static final GlobalKey<NavigatorState> navigatorKey =
+      GlobalKey<NavigatorState>();
+
+  @override
   Widget build(BuildContext context) {
     final config = AppConfig.current();
     return MaterialApp(
+      navigatorKey: navigatorKey,
       title: config.appName,
       debugShowCheckedModeBanner: false,
       localizationsDelegates: const [
