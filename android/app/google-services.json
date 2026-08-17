@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "994131871524",
+    "project_id": "fakerni-b96c2",
+    "storage_bucket": "fakerni-b96c2.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:994131871524:android:25fd653f1e6da976ea15b1",
+        "android_client_info": {
+          "package_name": "com.elbouni.ajalaks.el_bouni_pieces_auto"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBHpypQOAQnMmifFtJcX97Mnbrb8ORnd6U"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
