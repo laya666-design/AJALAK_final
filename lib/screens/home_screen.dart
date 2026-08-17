@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import '../config/app_config.dart';
+import '../services/store_service.dart';
 import '../services/vehicule.dart';
 import 'map_screen.dart';
+import 'marketplace/store_dashboard_screen.dart';
+import 'marketplace/store_login_screen.dart';
 import 'parts_screen.dart';
 import 'vehicles_screen.dart';
 
@@ -46,6 +49,18 @@ class _HomeScreenState extends State<HomeScreen> {
               foregroundColor: Colors.white,
               title: Text(widget.config.appName),
               actions: [
+                IconButton(
+                  tooltip: 'Espace Pro (magasins)',
+                  icon: const Icon(Icons.storefront),
+                  onPressed: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => StoreService.isLoggedIn
+                          ? StoreDashboardScreen(config: widget.config)
+                          : StoreLoginScreen(config: widget.config),
+                    ),
+                  ),
+                ),
                 TextButton(
                   onPressed: () => widget.isAr.value = !isAr,
                   child: Text(

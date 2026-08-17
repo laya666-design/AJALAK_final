@@ -4,7 +4,9 @@ import 'package:image_picker/image_picker.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../config/app_config.dart';
 import '../services/gemini_service.dart';
+import '../services/marketplace_service.dart';
 import '../services/models.dart';
+import 'marketplace/mes_demandes_screen.dart';
 
 class PartsScreen extends StatefulWidget {
   final AppConfig config;
@@ -23,10 +25,14 @@ class _PartsScreenState extends State<PartsScreen> {
   String? _error;
   CarPartInfo? _part;
 
+  bool _diffusing = false;
+  String? _diffusedRequestId;
+
   Future<void> _pickImage(ImageSource source) async {
     setState(() {
       _error = null;
       _part = null;
+      _diffusedRequestId = null;
     });
 
     final picked = await _picker.pickImage(source: source, imageQuality: 90);
@@ -49,6 +55,45 @@ class _PartsScreenState extends State<PartsScreen> {
       _error = 'Erreur d\'analyse : $e';
     } finally {
       if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  Future<void> _diffuserAuxMagasins() async {
+    final part = _part;
+    final image = _image;
+    if (part == null || image == null) return;
+
+    setState(() => _diffusing = true);
+    try {
+      final id = await MarketplaceService.broadcastRequest(
+        photo: image,
+        pieceNom: part.nom,
+        reference: part.reference,
+        compatibilite: part.compatibilite,
+      );
+      if (!mounted) return;
+      setState(() => _diffusedRequestId = id);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Demande envoyée aux magasins abonnés.'),
+          action: SnackBarAction(
+            label: 'Suivre',
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => MesDemandesScreen(config: widget.config),
+              ),
+            ),
+          ),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Échec de la diffusion : $e')),
+      );
+    } finally {
+      if (mounted) setState(() => _diffusing = false);
     }
   }
 
@@ -81,8 +126,25 @@ class _PartsScreenState extends State<PartsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text('Pièces détachées',
-                style: Theme.of(context).textTheme.headlineSmall),
+            Row(
+              children: [
+                Expanded(
+                  child: Text('Pièces détachées',
+                      style: Theme.of(context).textTheme.headlineSmall),
+                ),
+                TextButton.icon(
+                  onPressed: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) =>
+                          MesDemandesScreen(config: widget.config),
+                    ),
+                  ),
+                  icon: const Icon(Icons.list_alt, size: 18),
+                  label: const Text('Mes demandes'),
+                ),
+              ],
+            ),
             const SizedBox(height: 4),
             const Text(
               'Photographie la pièce cassée pour trouver référence et prix.',
@@ -331,6 +393,50 @@ class _PartsScreenState extends State<PartsScreen> {
                 ),
                 const SizedBox(height: 16),
               ],
+              if (_diffusedRequestId == null)
+                ElevatedButton.icon(
+                  onPressed: _diffusing ? null : _diffuserAuxMagasins,
+                  icon: _diffusing
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                              strokeWidth: 2, color: Colors.white),
+                        )
+                      : const Icon(Icons.campaign),
+                  label: Text(_diffusing
+                      ? 'Diffusion en cours...'
+                      : 'Diffuser aux magasins abonnés'),
+                  style: ElevatedButton.styleFrom(
+                    minimumSize: const Size.fromHeight(50),
+                    backgroundColor: widget.config.primaryColor,
+                    foregroundColor: Colors.white,
+                  ),
+                )
+              else
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFDCFCE7),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.check_circle,
+                          color: Color(0xFF166534)),
+                      const SizedBox(width: 8),
+                      const Expanded(
+                        child: Text(
+                          'Demande envoyée. Les magasins abonnés vont te '
+                          'répondre avec leur prix.',
+                          style: TextStyle(
+                              color: Color(0xFF166534), fontSize: 13),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              const SizedBox(height: 8),
               ElevatedButton(
                 onPressed: () {
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -342,7 +448,7 @@ class _PartsScreenState extends State<PartsScreen> {
                   backgroundColor: Colors.black,
                   foregroundColor: Colors.white,
                 ),
-                child: const Text('Commander'),
+                child: const Text('Commander (El Bouni)'),
               ),
             ],
           ],
