@@ -3,11 +3,34 @@ import '../config/app_config.dart';
 import '../services/ocr_service.dart';
 import '../services/vehicule.dart';
 import '../services/vehicule_service.dart';
+import 'controle_technique_screen.dart';
 import 'insurance_screen.dart';
 
 class VehiclesScreen extends StatefulWidget {
   final AppConfig config;
-  const VehiclesScreen({super.key, required this.config});
+
+  /// Catégories affichées dans cette rubrique. ex: [TypeVehicule.voiture]
+  /// pour la rubrique "Véhicules", ou [TypeVehicule.moto,
+  /// TypeVehicule.scooter] pour la rubrique "Motos & scooters".
+  final List<String> types;
+
+  final String titre;
+  final String sousTitre;
+  final IconData iconePrincipale;
+  final String labelAjout;
+  final String labelVide;
+
+  const VehiclesScreen({
+    super.key,
+    required this.config,
+    this.types = const [TypeVehicule.voiture],
+    this.titre = 'Mes véhicules',
+    this.sousTitre =
+        'Assurance, vignette et contrôle technique, par véhicule.',
+    this.iconePrincipale = Icons.directions_car,
+    this.labelAjout = 'Ajouter un véhicule',
+    this.labelVide = 'Aucun véhicule pour le moment',
+  });
 
   @override
   State<VehiclesScreen> createState() => _VehiclesScreenState();
@@ -23,12 +46,34 @@ class _VehiclesScreenState extends State<VehiclesScreen> {
   }
 
   void _refresh() {
-    setState(() => _vehicules = VehiculeService.getAll());
+    setState(() => _vehicules = VehiculeService.getByTypes(widget.types));
+  }
+
+  IconData _iconForType(String type) {
+    switch (type) {
+      case TypeVehicule.moto:
+        return Icons.two_wheeler;
+      case TypeVehicule.scooter:
+        return Icons.moped;
+      default:
+        return Icons.directions_car;
+    }
+  }
+
+  String _labelForType(String type) {
+    switch (type) {
+      case TypeVehicule.moto:
+        return 'Moto';
+      case TypeVehicule.scooter:
+        return 'Scooter';
+      default:
+        return 'Voiture';
+    }
   }
 
   Future<void> _openAddDialog() async {
     final isPremium = SettingsService.isPremium;
-    final canAddFree = VehiculeService.canAddFree;
+    final canAddFree = VehiculeService.canAddFreeForTypes(widget.types);
 
     if (!isPremium && !canAddFree) {
       _showPremiumSheet();
@@ -37,20 +82,40 @@ class _VehiclesScreenState extends State<VehiclesScreen> {
 
     final nomController = TextEditingController();
     final marqueController = TextEditingController();
+    String selectedType = widget.types.first;
 
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setDialogState) => AlertDialog(
-          title: const Text('Ajouter un véhicule'),
+          title: Text(widget.labelAjout),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              // Sélecteur de catégorie : uniquement si la rubrique regroupe
+              // plusieurs types (ex: Motos & scooters).
+              if (widget.types.length > 1) ...[
+                SegmentedButton<String>(
+                  segments: widget.types
+                      .map((t) => ButtonSegment<String>(
+                            value: t,
+                            label: Text(_labelForType(t)),
+                            icon: Icon(_iconForType(t)),
+                          ))
+                      .toList(),
+                  selected: {selectedType},
+                  onSelectionChanged: (s) =>
+                      setDialogState(() => selectedType = s.first),
+                ),
+                const SizedBox(height: 12),
+              ],
               TextField(
                 controller: nomController,
-                decoration: const InputDecoration(
-                  labelText: 'Nom du véhicule',
-                  hintText: 'ex: Peugeot 208',
+                decoration: InputDecoration(
+                  labelText: 'Nom',
+                  hintText: widget.types.contains(TypeVehicule.voiture)
+                      ? 'ex: Peugeot 208'
+                      : 'ex: Yamaha 125',
                 ),
                 autofocus: true,
                 onChanged: (_) => setDialogState(() {}),
@@ -86,6 +151,7 @@ class _VehiclesScreenState extends State<VehiclesScreen> {
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       nom: nomController.text.trim(),
       marque: marqueController.text.trim(),
+      type: selectedType,
     );
     await VehiculeService.add(v);
     _refresh();
@@ -112,8 +178,8 @@ class _VehiclesScreenState extends State<VehiclesScreen> {
             ),
             const SizedBox(height: 12),
             const Text(
-              'La version gratuite permet de gérer 1 véhicule. '
-              'Passe en Premium pour ajouter des véhicules illimités.',
+              'La version gratuite permet de gérer 1 élément dans cette '
+              'rubrique. Passe en Premium pour en ajouter sans limite.',
             ),
             const SizedBox(height: 20),
             SizedBox(
@@ -140,27 +206,42 @@ class _VehiclesScreenState extends State<VehiclesScreen> {
     await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => Scaffold(
-          appBar: AppBar(
-            backgroundColor: widget.config.primaryColor,
-            foregroundColor: Colors.white,
-            title: Text(v.nom),
+        builder: (_) => DefaultTabController(
+          length: 2,
+          child: Scaffold(
+            appBar: AppBar(
+              backgroundColor: widget.config.primaryColor,
+              foregroundColor: Colors.white,
+              title: Text(v.nom),
+              bottom: const TabBar(
+                indicatorColor: Colors.white,
+                tabs: [
+                  Tab(icon: Icon(Icons.security), text: 'Assurance'),
+                  Tab(icon: Icon(Icons.fact_check), text: 'Contrôle technique'),
+                ],
+              ),
+            ),
+            body: TabBarView(
+              children: [
+                InsuranceScreen(config: widget.config, vehicule: v),
+                ControleTechniqueScreen(config: widget.config, vehicule: v),
+              ],
+            ),
           ),
-          body: InsuranceScreen(config: widget.config, vehicule: v),
         ),
       ),
     );
     _refresh();
   }
 
-  Widget _statusChip(Vehicule v) {
-    if (v.assuranceExpiration == null) {
-      return const Chip(
-        label: Text('Assurance non renseignée', style: TextStyle(fontSize: 11)),
+  Widget _statusChip(DateTime? expiration, String labelVide) {
+    if (expiration == null) {
+      return Chip(
+        label: Text(labelVide, style: const TextStyle(fontSize: 11)),
         visualDensity: VisualDensity.compact,
       );
     }
-    final status = ExpiryStatus(expirationDate: v.assuranceExpiration!);
+    final status = ExpiryStatus(expirationDate: expiration);
     Color bg;
     Color fg;
     switch (status.level) {
@@ -195,7 +276,8 @@ class _VehiclesScreenState extends State<VehiclesScreen> {
   @override
   Widget build(BuildContext context) {
     final isPremium = SettingsService.isPremium;
-    final showLockedCard = !isPremium && _vehicules.length >= VehiculeService.freeLimit;
+    final showLockedCard = !isPremium &&
+        _vehicules.length >= VehiculeService.freeLimit;
 
     return SafeArea(
       child: RefreshIndicator(
@@ -203,12 +285,9 @@ class _VehiclesScreenState extends State<VehiclesScreen> {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            Text('Mes véhicules', style: Theme.of(context).textTheme.headlineSmall),
+            Text(widget.titre, style: Theme.of(context).textTheme.headlineSmall),
             const SizedBox(height: 4),
-            const Text(
-              'Assurance, vignette et bientôt le contrôle technique, par véhicule.',
-              style: TextStyle(color: Colors.black54),
-            ),
+            Text(widget.sousTitre, style: const TextStyle(color: Colors.black54)),
             const SizedBox(height: 16),
             if (_vehicules.isEmpty)
               Padding(
@@ -216,11 +295,11 @@ class _VehiclesScreenState extends State<VehiclesScreen> {
                 child: Center(
                   child: Column(
                     children: [
-                      Icon(Icons.directions_car,
+                      Icon(widget.iconePrincipale,
                           size: 48, color: Colors.grey.shade400),
                       const SizedBox(height: 8),
-                      const Text('Aucun véhicule pour le moment',
-                          style: TextStyle(color: Colors.black54)),
+                      Text(widget.labelVide,
+                          style: const TextStyle(color: Colors.black54)),
                     ],
                   ),
                 ),
@@ -232,12 +311,27 @@ class _VehiclesScreenState extends State<VehiclesScreen> {
                     leading: CircleAvatar(
                       backgroundColor: widget.config.primaryColor.withOpacity(0.1),
                       foregroundColor: widget.config.primaryColor,
-                      child: const Icon(Icons.directions_car),
+                      child: Icon(_iconForType(v.type)),
                     ),
                     title: Text(v.nom, style: const TextStyle(fontWeight: FontWeight.w600)),
                     subtitle: Padding(
                       padding: const EdgeInsets.only(top: 6),
-                      child: _statusChip(v),
+                      child: Wrap(
+                        spacing: 8,
+                        runSpacing: 6,
+                        children: [
+                          if (widget.types.length > 1)
+                            Chip(
+                              label: Text(_labelForType(v.type),
+                                  style: const TextStyle(fontSize: 11)),
+                              visualDensity: VisualDensity.compact,
+                              backgroundColor:
+                                  widget.config.primaryColor.withOpacity(0.08),
+                            ),
+                          _statusChip(v.assuranceExpiration, 'Assurance non renseignée'),
+                          _statusChip(v.controleTechniqueExpiration, 'CT non renseigné'),
+                        ],
+                      ),
                     ),
                     trailing: const Icon(Icons.chevron_right),
                     onTap: () => _openVehicle(v),
@@ -250,7 +344,7 @@ class _VehiclesScreenState extends State<VehiclesScreen> {
                 child: ListTile(
                   contentPadding: const EdgeInsets.all(12),
                   leading: const Icon(Icons.lock_outline, color: Colors.black45),
-                  title: const Text('2e véhicule et plus',
+                  title: const Text('Élément suivant',
                       style: TextStyle(fontWeight: FontWeight.w600)),
                   subtitle: const Text('Réservé aux comptes Premium'),
                   trailing: Chip(
@@ -266,7 +360,7 @@ class _VehiclesScreenState extends State<VehiclesScreen> {
                 child: OutlinedButton.icon(
                   onPressed: _openAddDialog,
                   icon: const Icon(Icons.add),
-                  label: const Text('Ajouter un véhicule'),
+                  label: Text(widget.labelAjout),
                   style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(48)),
                 ),
               ),

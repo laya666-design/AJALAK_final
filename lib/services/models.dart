@@ -28,6 +28,27 @@ class InsuranceInfo {
   }
 }
 
+class ControleTechniqueInfo {
+  final String centre;
+  final String numero;
+  final String kilometrage;
+
+  ControleTechniqueInfo({
+    this.centre = '',
+    this.numero = '',
+    this.kilometrage = '',
+  });
+
+  factory ControleTechniqueInfo.fromJson(Map<String, dynamic>? json) {
+    if (json == null) return ControleTechniqueInfo();
+    return ControleTechniqueInfo(
+      centre: json['centre']?.toString() ?? '',
+      numero: json['numero']?.toString() ?? '',
+      kilometrage: json['kilometrage']?.toString() ?? '',
+    );
+  }
+}
+
 class StoreOffer {
   final String nom;
   final num prix;

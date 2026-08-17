@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../config/app_config.dart';
+import '../services/vehicule.dart';
 import 'map_screen.dart';
 import 'parts_screen.dart';
 import 'vehicles_screen.dart';
@@ -21,6 +22,15 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     final screens = [
       VehiclesScreen(config: widget.config),
+      VehiclesScreen(
+        config: widget.config,
+        types: const [TypeVehicule.moto, TypeVehicule.scooter],
+        titre: 'Motos & scooters',
+        sousTitre: 'Assurance, vignette et contrôle technique, par deux-roues.',
+        iconePrincipale: Icons.two_wheeler,
+        labelAjout: 'Ajouter une moto / un scooter',
+        labelVide: 'Aucune moto ni scooter pour le moment',
+      ),
       PartsScreen(config: widget.config),
       MapScreen(config: widget.config),
     ];
@@ -54,6 +64,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 NavigationDestination(
                   icon: const Icon(Icons.directions_car),
                   label: isAr ? 'سياراتي' : 'Véhicules',
+                ),
+                NavigationDestination(
+                  icon: const Icon(Icons.two_wheeler),
+                  label: isAr ? 'دراجاتي' : 'Motos',
                 ),
                 NavigationDestination(
                   icon: const Icon(Icons.build),

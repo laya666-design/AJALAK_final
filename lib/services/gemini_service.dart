@@ -100,6 +100,34 @@ REGLE: magasins doit toujours etre un tableau vide [].
     }
   }
 
+  Future<Map<String, dynamic>> analyzeControleTechnique(File file) async {
+    try {
+      final prompt = '''
+Tu es un expert controle technique automobile pour l Algerie.
+REGLE CRITIQUE: Ne jamais inventer de nom de centre, adresse ou telephone.
+Analyse cette image d attestation/vignette de controle technique algerien.
+Retourne UNIQUEMENT ce JSON (aucun texte avant/apres, pas de markdown):
+
+{
+  "centre": "string ou null",
+  "numero": "string ou null",
+  "kilometrage": "string ou null",
+  "date_prochain_controle": "dd/MM/yyyy ou null",
+  "jours_restants": 0
+}
+
+REGLE: ne jamais inventer d informations non visibles sur l image.
+''';
+
+      final raw = await _callGroq(prompt, file);
+      final json = _parseJson(raw);
+      json.remove('magasins');
+      return json;
+    } catch (e) {
+      return {'error': e.toString()};
+    }
+  }
+
   Future<Map<String, dynamic>> analyzeCarPart(File file) async {
     try {
       final prompt = '''

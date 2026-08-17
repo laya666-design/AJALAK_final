@@ -1,13 +1,26 @@
 import 'package:hive/hive.dart';
 
+/// Catégories de véhicules gérées par l'app.
+class TypeVehicule {
+  static const String voiture = 'voiture';
+  static const String moto = 'moto';
+  static const String scooter = 'scooter';
+}
+
 /// Un véhicule géré dans l'app : regroupe assurance/vignette (une seule
 /// carte jaune couvre les deux en Algérie) et, à terme, le contrôle
-/// technique (Phase 2).
+/// technique (Phase 2). Couvre voitures, motos et scooters (même structure,
+/// distingués par [type]).
 class Vehicule extends HiveObject {
   String id;
   String nom; // ex: "Peugeot 208" ou "Voiture de Sarah"
   String marque;
   String immatriculation;
+
+  /// TypeVehicule.voiture / .moto / .scooter — 'voiture' par défaut pour
+  /// rester compatible avec les véhicules déjà enregistrés avant l'ajout
+  /// des catégories.
+  String type;
 
   // --- Assurance / Vignette (Phase 1) ---
   DateTime? assuranceExpiration;
@@ -15,8 +28,10 @@ class Vehicule extends HiveObject {
   String assuranceNumeroPolice;
   String assuranceNomAssure;
 
-  // --- Contrôle technique (Phase 2 — champ prêt, pas encore utilisé) ---
+  // --- Contrôle technique (Phase 2) ---
   DateTime? controleTechniqueExpiration;
+  String ctCentre;
+  String ctNumero;
 
   final DateTime dateAjout;
 
@@ -25,11 +40,14 @@ class Vehicule extends HiveObject {
     required this.nom,
     this.marque = '',
     this.immatriculation = '',
+    this.type = TypeVehicule.voiture,
     this.assuranceExpiration,
     this.assuranceCompagnie = '',
     this.assuranceNumeroPolice = '',
     this.assuranceNomAssure = '',
     this.controleTechniqueExpiration,
+    this.ctCentre = '',
+    this.ctNumero = '',
     DateTime? dateAjout,
   }) : dateAjout = dateAjout ?? DateTime.now();
 }
@@ -57,13 +75,19 @@ class VehiculeAdapter extends TypeAdapter<Vehicule> {
       controleTechniqueExpiration: fields[7] as DateTime?,
       dateAjout: fields[8] as DateTime? ?? DateTime.now(),
       assuranceNomAssure: fields[9] as String? ?? '',
+      ctCentre: fields[10] as String? ?? '',
+      ctNumero: fields[11] as String? ?? '',
+      // Champ ajouté après coup : les véhicules déjà enregistrés n'ont pas
+      // ce champ -> on les considère comme des voitures (comportement
+      // inchangé pour l'existant).
+      type: fields[12] as String? ?? TypeVehicule.voiture,
     );
   }
 
   @override
   void write(BinaryWriter writer, Vehicule obj) {
     writer
-      ..writeByte(10)
+      ..writeByte(13)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -83,6 +107,12 @@ class VehiculeAdapter extends TypeAdapter<Vehicule> {
       ..writeByte(8)
       ..write(obj.dateAjout)
       ..writeByte(9)
-      ..write(obj.assuranceNomAssure);
+      ..write(obj.assuranceNomAssure)
+      ..writeByte(10)
+      ..write(obj.ctCentre)
+      ..writeByte(11)
+      ..write(obj.ctNumero)
+      ..writeByte(12)
+      ..write(obj.type);
   }
 }

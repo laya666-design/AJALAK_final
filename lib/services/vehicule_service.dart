@@ -25,6 +25,12 @@ class VehiculeService {
     return list;
   }
 
+  /// Ne renvoie que les véhicules dont le type figure dans [types]
+  /// (ex: ['moto', 'scooter'] pour la rubrique deux-roues).
+  static List<Vehicule> getByTypes(List<String> types) {
+    return getAll().where((v) => types.contains(v.type)).toList();
+  }
+
   static Vehicule? getById(String id) => _box.get(id);
 
   static Future<Vehicule> add(Vehicule v) async {
@@ -41,6 +47,14 @@ class VehiculeService {
   }
 
   static bool get canAddFree => _box.length < freeLimit;
+
+  /// Limite freemium appliquée par rubrique (ex: 1 voiture gratuite ET,
+  /// séparément, 1 moto/scooter gratuit — chaque rubrique se comporte comme
+  /// la rubrique Véhicules).
+  static bool canAddFreeForTypes(List<String> types) {
+    return _box.values.where((v) => types.contains(v.type)).length <
+        freeLimit;
+  }
 }
 
 /// Petit flag Premium local. Mock pour l'instant (Phase 1) : pas de vrai
