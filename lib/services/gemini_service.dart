@@ -14,7 +14,7 @@ class GeminiService {
     final base64Image = base64Encode(bytes);
 
     final body = {
-      "model": "llama-3.2-90b-vision-preview",
+      "model": "qwen/qwen3.6-27b",
       "messages": [
         {
           "role": "user",
