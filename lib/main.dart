@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'firebase_options.dart';
 import 'config/app_config.dart';
 import 'screens/home_screen.dart';
+import 'services/notification_service.dart';
 import 'services/vehicule_service.dart';
 
 void main() async {
@@ -15,6 +17,12 @@ void main() async {
   // Stockage local (Hive) pour la gestion multi-véhicules — Phase 1.
   await VehiculeService.init();
   await SettingsService.init();
+
+  // Rappels locaux J-30/J-15/J-7 avant expiration.
+  await NotificationService.init();
+
+  // Bannière publicitaire (AdMob).
+  await MobileAds.instance.initialize();
 
   runApp(const AjalakApp());
 }

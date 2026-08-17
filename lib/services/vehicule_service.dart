@@ -76,4 +76,17 @@ class SettingsService {
   static Future<void> setPremium(bool value) async {
     await _box.put(_premiumKey, value);
   }
+
+  // --- Rappels SMS / Appel (Premium) ---
+  // Mock pour l'instant : stocke juste la préférence localement.
+  // L'envoi réel nécessite un service tiers payant (ex: Twilio) + un
+  // backend pour déclencher les envois — pas encore construit.
+  static const String _smsRemindersKey = 'smsRemindersEnabled';
+
+  static bool get smsRemindersEnabled =>
+      _box.get(_smsRemindersKey, defaultValue: false) as bool;
+
+  static Future<void> setSmsRemindersEnabled(bool value) async {
+    await _box.put(_smsRemindersKey, value);
+  }
 }

@@ -4,6 +4,7 @@ import 'package:image_picker/image_picker.dart';
 import '../config/app_config.dart';
 import '../services/gemini_service.dart';
 import '../services/models.dart';
+import '../services/notification_service.dart';
 import '../services/ocr_service.dart';
 import '../services/vehicule.dart';
 import '../services/vehicule_service.dart';
@@ -61,6 +62,13 @@ class _ControleTechniqueScreenState extends State<ControleTechniqueScreen> {
       if (_info!.numero.isNotEmpty) v.ctNumero = _info!.numero;
     }
     await VehiculeService.update(v);
+    await NotificationService.scheduleExpiryReminders(
+      vehiculeId: v.id,
+      typeRappel: 'ct',
+      titre: v.nom,
+      libelleDocument: 'Contrôle technique',
+      expiration: v.controleTechniqueExpiration!,
+    );
   }
 
   Future<void> _pickImage(ImageSource source) async {

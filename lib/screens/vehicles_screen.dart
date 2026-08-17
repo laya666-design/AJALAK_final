@@ -3,6 +3,7 @@ import '../config/app_config.dart';
 import '../services/ocr_service.dart';
 import '../services/vehicule.dart';
 import '../services/vehicule_service.dart';
+import '../widgets/ad_banner.dart';
 import 'controle_technique_screen.dart';
 import 'insurance_screen.dart';
 
@@ -160,43 +161,63 @@ class _VehiclesScreenState extends State<VehiclesScreen> {
   void _showPremiumSheet() {
     showModalBottomSheet(
       context: context,
-      builder: (ctx) => Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(Icons.workspace_premium,
-                    color: widget.config.primaryColor, size: 28),
-                const SizedBox(width: 8),
-                const Text('Passe en Premium',
-                    style:
-                        TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-              ],
-            ),
-            const SizedBox(height: 12),
-            const Text(
-              'La version gratuite permet de gérer 1 élément dans cette '
-              'rubrique. Passe en Premium pour en ajouter sans limite.',
-            ),
-            const SizedBox(height: 20),
-            SizedBox(
-              width: double.infinity,
-              child: FilledButton(
-                style: FilledButton.styleFrom(
-                  backgroundColor: widget.config.primaryColor,
-                ),
-                onPressed: () {
-                  // Mock Phase 1 : pas de vrai paiement, juste le flag local.
-                  // À remplacer par une vraie logique d'achat in-app.
-                  Navigator.pop(ctx);
-                },
-                child: const Text('Bientôt disponible'),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setSheetState) => Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.workspace_premium,
+                      color: widget.config.primaryColor, size: 28),
+                  const SizedBox(width: 8),
+                  const Text('Passe en Premium',
+                      style: TextStyle(
+                          fontSize: 18, fontWeight: FontWeight.bold)),
+                ],
               ),
-            ),
-          ],
+              const SizedBox(height: 12),
+              const Text(
+                'La version gratuite permet de gérer 1 élément dans cette '
+                'rubrique. Passe en Premium pour en ajouter sans limite, '
+                'et pour activer les rappels par SMS et appel.',
+              ),
+              const SizedBox(height: 16),
+              SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                title: const Text('Rappels par SMS / Appel'),
+                subtitle: const Text(
+                  'En plus des notifications sur le téléphone. '
+                  'Bientôt disponible.',
+                  style: TextStyle(fontSize: 12),
+                ),
+                value: SettingsService.smsRemindersEnabled,
+                onChanged: (val) async {
+                  await SettingsService.setSmsRemindersEnabled(val);
+                  setSheetState(() {});
+                },
+              ),
+              const SizedBox(height: 8),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton(
+                  style: FilledButton.styleFrom(
+                    backgroundColor: widget.config.primaryColor,
+                  ),
+                  onPressed: () {
+                    // Mock Phase 1 : pas de vrai paiement, juste le flag
+                    // local. À remplacer par une vraie logique d'achat
+                    // in-app. Le SMS/Appel nécessite en plus un service
+                    // tiers (ex: Twilio) + un backend pour l'envoi réel.
+                    Navigator.pop(ctx);
+                  },
+                  child: const Text('Bientôt disponible'),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -288,7 +309,9 @@ class _VehiclesScreenState extends State<VehiclesScreen> {
             Text(widget.titre, style: Theme.of(context).textTheme.headlineSmall),
             const SizedBox(height: 4),
             Text(widget.sousTitre, style: const TextStyle(color: Colors.black54)),
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
+            const AdBanner(),
+            const SizedBox(height: 4),
             if (_vehicules.isEmpty)
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 32),

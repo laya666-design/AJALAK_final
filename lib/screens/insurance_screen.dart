@@ -4,6 +4,7 @@ import 'package:image_picker/image_picker.dart';
 import '../config/app_config.dart';
 import '../services/gemini_service.dart';
 import '../services/models.dart';
+import '../services/notification_service.dart';
 import '../services/ocr_service.dart';
 import '../services/vehicule.dart';
 import '../services/vehicule_service.dart';
@@ -69,6 +70,13 @@ class _InsuranceScreenState extends State<InsuranceScreen> {
       if (_info!.marque.isNotEmpty && v.marque.isEmpty) v.marque = _info!.marque;
     }
     await VehiculeService.update(v);
+    await NotificationService.scheduleExpiryReminders(
+      vehiculeId: v.id,
+      typeRappel: 'assurance',
+      titre: v.nom,
+      libelleDocument: 'Assurance / Vignette',
+      expiration: v.assuranceExpiration!,
+    );
   }
 
   Future<void> _pickImage(ImageSource source) async {
