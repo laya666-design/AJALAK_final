@@ -40,40 +40,43 @@ class _VehiclesScreenState extends State<VehiclesScreen> {
 
     final ok = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Ajouter un véhicule'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: nomController,
-              decoration: const InputDecoration(
-                labelText: 'Nom du véhicule',
-                hintText: 'ex: Peugeot 208',
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          title: const Text('Ajouter un véhicule'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: nomController,
+                decoration: const InputDecoration(
+                  labelText: 'Nom du véhicule',
+                  hintText: 'ex: Peugeot 208',
+                ),
+                autofocus: true,
+                onChanged: (_) => setDialogState(() {}),
               ),
-              autofocus: true,
+              const SizedBox(height: 12),
+              TextField(
+                controller: marqueController,
+                decoration: const InputDecoration(
+                  labelText: 'Marque / modèle (optionnel)',
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Annuler'),
             ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: marqueController,
-              decoration: const InputDecoration(
-                labelText: 'Marque / modèle (optionnel)',
-              ),
+            FilledButton(
+              onPressed: nomController.text.trim().isEmpty
+                  ? null
+                  : () => Navigator.pop(ctx, true),
+              child: const Text('Ajouter'),
             ),
           ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Annuler'),
-          ),
-          FilledButton(
-            onPressed: nomController.text.trim().isEmpty
-                ? null
-                : () => Navigator.pop(ctx, true),
-            child: const Text('Ajouter'),
-          ),
-        ],
       ),
     );
 
