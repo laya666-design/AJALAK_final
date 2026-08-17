@@ -28,6 +28,7 @@ class GeminiService {
         }
       ],
       "temperature": 0.2,
+      "reasoning_effort": "none",
     };
 
     final response = await http.post(
@@ -50,15 +51,24 @@ class GeminiService {
   }
 
   Map<String, dynamic> _parseJson(String raw) {
+    // Retire un eventuel bloc de raisonnement <think>...</think>
+    String cleaned =
+        raw.replaceAll(RegExp(r'<think>[\s\S]*?</think>'), '').trim();
+    cleaned = cleaned.replaceAll('```json', '').replaceAll('```', '').trim();
+
     try {
-      final json = jsonDecode(raw) as Map<String, dynamic>;
-      json['magasins'] = [];
-      return json;
-    } catch (_) {
-      final cleaned = raw.replaceAll('```json', '').replaceAll('```', '').trim();
       final json = jsonDecode(cleaned) as Map<String, dynamic>;
       json['magasins'] = [];
       return json;
+    } catch (_) {
+      // Filet de secours: extrait le premier bloc { ... } trouve dans le texte
+      final match = RegExp(r'\{[\s\S]*\}').firstMatch(cleaned);
+      if (match != null) {
+        final json = jsonDecode(match.group(0)!) as Map<String, dynamic>;
+        json['magasins'] = [];
+        return json;
+      }
+      rethrow;
     }
   }
 
