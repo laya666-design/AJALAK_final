@@ -21,22 +21,3 @@ class AppConfig {
 
   static AppConfig current() => _instance;
 }
-
-/// Clé API Gemini.
-///
-/// ⚠️ SÉCURITÉ : ne jamais committer une vraie clé en dur si le repo est
-/// (ou peut devenir) public. Deux options :
-///   1) Build local / repo privé -> tu peux laisser la valeur en dur ci-dessous.
-///   2) GitHub Actions -> passe-la en secret et compile avec :
-///      flutter build apk --dart-define=GEMINI_API_KEY=$GEMINI_API_KEY
-/// Le code lit TOUJOURS la variable d'environnement de compilation en priorité ;
-/// si elle est vide, il retombe sur la constante ci-dessous.
-class ApiKeys {
-  static const String _fallbackGeminiKey =
-      'AQ.Ab8RN6IGbMPrMy9ZToZdd_F2BWlqQoVfBlBcH80H8aP90BRLGg';
-
-  static const String gemini = String.fromEnvironment(
-    'GEMINI_API_KEY',
-    defaultValue: _fallbackGeminiKey,
-  );
-}

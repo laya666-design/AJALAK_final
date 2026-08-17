@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import '../config/app_config.dart';
-import 'insurance_screen.dart';
 import 'map_screen.dart';
 import 'parts_screen.dart';
+import 'vehicles_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   final AppConfig config;
@@ -20,7 +20,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final screens = [
-      InsuranceScreen(config: widget.config),
+      VehiclesScreen(config: widget.config),
       PartsScreen(config: widget.config),
       MapScreen(config: widget.config),
     ];
@@ -52,8 +52,8 @@ class _HomeScreenState extends State<HomeScreen> {
               onDestinationSelected: (i) => setState(() => _index = i),
               destinations: [
                 NavigationDestination(
-                  icon: const Icon(Icons.security),
-                  label: isAr ? 'التأمين' : 'Assurance',
+                  icon: const Icon(Icons.directions_car),
+                  label: isAr ? 'سياراتي' : 'Véhicules',
                 ),
                 NavigationDestination(
                   icon: const Icon(Icons.build),

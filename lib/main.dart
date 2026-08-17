@@ -4,12 +4,17 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'firebase_options.dart';
 import 'config/app_config.dart';
 import 'screens/home_screen.dart';
+import 'services/vehicule_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
+  // Stockage local (Hive) pour la gestion multi-véhicules — Phase 1.
+  await VehiculeService.init();
+  await SettingsService.init();
 
   runApp(const AjalakApp());
 }

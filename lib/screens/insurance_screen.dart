@@ -5,11 +5,19 @@ import '../config/app_config.dart';
 import '../services/gemini_service.dart';
 import '../services/models.dart';
 import '../services/ocr_service.dart';
+import '../services/vehicule.dart';
+import '../services/vehicule_service.dart';
 import '../widgets/status_card.dart';
 
 class InsuranceScreen extends StatefulWidget {
   final AppConfig config;
-  const InsuranceScreen({super.key, required this.config});
+
+  /// Si fourni, les résultats sont rattachés et sauvegardés sur ce véhicule
+  /// (Phase 1 — gestion multi-véhicules). Si null, l'écran fonctionne comme
+  /// avant, sans persistance (compatibilité ascendante).
+  final Vehicule? vehicule;
+
+  const InsuranceScreen({super.key, required this.config, this.vehicule});
 
   @override
   State<InsuranceScreen> createState() => _InsuranceScreenState();
@@ -28,9 +36,39 @@ class _InsuranceScreenState extends State<InsuranceScreen> {
   InsuranceInfo? _info; // détails structurés via Gemini -> complément
 
   @override
+  void initState() {
+    super.initState();
+    // Si le véhicule a déjà une assurance enregistrée, on l'affiche
+    // directement sans attendre une nouvelle photo.
+    final v = widget.vehicule;
+    if (v?.assuranceExpiration != null) {
+      _status = ExpiryStatus(expirationDate: v!.assuranceExpiration!);
+      _info = InsuranceInfo(
+        compagnie: v.assuranceCompagnie,
+        nom: v.assuranceNomAssure,
+        marque: v.marque,
+        police: v.assuranceNumeroPolice,
+      );
+    }
+  }
+
+  @override
   void dispose() {
     _ocr.dispose();
     super.dispose();
+  }
+
+  Future<void> _saveToVehicule() async {
+    final v = widget.vehicule;
+    if (v == null || _status == null) return;
+    v.assuranceExpiration = _status!.expirationDate;
+    if (_info != null) {
+      if (_info!.compagnie.isNotEmpty) v.assuranceCompagnie = _info!.compagnie;
+      if (_info!.nom.isNotEmpty) v.assuranceNomAssure = _info!.nom;
+      if (_info!.police.isNotEmpty) v.assuranceNumeroPolice = _info!.police;
+      if (_info!.marque.isNotEmpty && v.marque.isEmpty) v.marque = _info!.marque;
+    }
+    await VehiculeService.update(v);
   }
 
   Future<void> _pickImage(ImageSource source) async {
@@ -71,6 +109,8 @@ class _InsuranceScreenState extends State<InsuranceScreen> {
         // Le complément IA est optionnel : l'échec ne bloque pas le calcul.
         _info = InsuranceInfo();
       }
+
+      await _saveToVehicule();
     } catch (e) {
       _error = 'Erreur de lecture de l\'image : $e';
     } finally {
@@ -109,7 +149,9 @@ class _InsuranceScreenState extends State<InsuranceScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
-              'Assurance / Vignette',
+              widget.vehicule != null
+                  ? 'Assurance / Vignette — ${widget.vehicule!.nom}'
+                  : 'Assurance / Vignette',
               style: Theme.of(context).textTheme.headlineSmall,
             ),
             const SizedBox(height: 4),
