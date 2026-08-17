@@ -1,11 +1,8 @@
 import 'package:flutter/material.dart';
 import '../config/app_config.dart';
-import '../services/store_service.dart';
 import '../services/vehicule.dart';
-import 'map_screen.dart';
-import 'marketplace/store_dashboard_screen.dart';
-import 'marketplace/store_login_screen.dart';
 import 'parts_screen.dart';
+import 'profile_screen.dart';
 import 'vehicles_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -23,24 +20,30 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final screens = [
-      VehiclesScreen(config: widget.config),
-      VehiclesScreen(
-        config: widget.config,
-        types: const [TypeVehicule.moto, TypeVehicule.scooter],
-        titre: 'Motos & scooters',
-        sousTitre: 'Assurance, vignette et contrôle technique, par deux-roues.',
-        iconePrincipale: Icons.two_wheeler,
-        labelAjout: 'Ajouter une moto / un scooter',
-        labelVide: 'Aucune moto ni scooter pour le moment',
-      ),
-      PartsScreen(config: widget.config),
-      MapScreen(config: widget.config),
-    ];
-
     return ValueListenableBuilder<bool>(
       valueListenable: widget.isAr,
       builder: (context, isAr, _) {
+        final screens = [
+          VehiclesScreen(config: widget.config, isAr: isAr),
+          VehiclesScreen(
+            config: widget.config,
+            isAr: isAr,
+            types: const [TypeVehicule.moto, TypeVehicule.scooter],
+            titre: 'Motos & scooters',
+            titreAr: 'الدراجات النارية',
+            sousTitre:
+                'Assurance, vignette et contrôle technique, par deux-roues.',
+            sousTitreAr: 'التأمين والرخصة والفحص التقني، لكل دراجة.',
+            iconePrincipale: Icons.two_wheeler,
+            labelAjout: 'Ajouter une moto / un scooter',
+            labelAjoutAr: 'إضافة دراجة نارية / سكوتر',
+            labelVide: 'Aucune moto ni scooter pour le moment',
+            labelVideAr: 'لا توجد دراجة حتى الآن',
+          ),
+          PartsScreen(config: widget.config, isAr: isAr),
+          ProfileScreen(config: widget.config, isAr: widget.isAr),
+        ];
+
         return Directionality(
           textDirection: isAr ? TextDirection.rtl : TextDirection.ltr,
           child: Scaffold(
@@ -49,18 +52,6 @@ class _HomeScreenState extends State<HomeScreen> {
               foregroundColor: Colors.white,
               title: Text(widget.config.appName),
               actions: [
-                IconButton(
-                  tooltip: 'Espace Pro (magasins)',
-                  icon: const Icon(Icons.storefront),
-                  onPressed: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => StoreService.isLoggedIn
-                          ? StoreDashboardScreen(config: widget.config)
-                          : StoreLoginScreen(config: widget.config),
-                    ),
-                  ),
-                ),
                 TextButton(
                   onPressed: () => widget.isAr.value = !isAr,
                   child: Text(
@@ -89,8 +80,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   label: isAr ? 'القطع' : 'Pièces',
                 ),
                 NavigationDestination(
-                  icon: const Icon(Icons.map),
-                  label: isAr ? 'الخريطة' : 'Carte',
+                  icon: const Icon(Icons.person),
+                  label: isAr ? 'حسابي' : 'Profil',
                 ),
               ],
             ),

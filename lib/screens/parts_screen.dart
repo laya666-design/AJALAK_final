@@ -4,13 +4,12 @@ import 'package:image_picker/image_picker.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../config/app_config.dart';
 import '../services/gemini_service.dart';
-import '../services/marketplace_service.dart';
 import '../services/models.dart';
-import 'marketplace/mes_demandes_screen.dart';
 
 class PartsScreen extends StatefulWidget {
   final AppConfig config;
-  const PartsScreen({super.key, required this.config});
+  final bool isAr;
+  const PartsScreen({super.key, required this.config, this.isAr = false});
 
   @override
   State<PartsScreen> createState() => _PartsScreenState();
@@ -25,14 +24,13 @@ class _PartsScreenState extends State<PartsScreen> {
   String? _error;
   CarPartInfo? _part;
 
-  bool _diffusing = false;
-  String? _diffusedRequestId;
+  bool get _ar => widget.isAr;
+  String _t(String fr, String ar) => _ar ? ar : fr;
 
   Future<void> _pickImage(ImageSource source) async {
     setState(() {
       _error = null;
       _part = null;
-      _diffusedRequestId = null;
     });
 
     final picked = await _picker.pickImage(source: source, imageQuality: 90);
@@ -47,53 +45,14 @@ class _PartsScreenState extends State<PartsScreen> {
     try {
       final json = await _gemini.analyzeCarPart(file);
       if (json.containsKey('error')) {
-        _error = 'Erreur Gemini : ${json['error']}';
+        _error = _t('Erreur : ${json['error']}', 'خطأ: ${json['error']}');
       } else {
         _part = CarPartInfo.fromJson(json);
       }
     } catch (e) {
-      _error = 'Erreur d\'analyse : $e';
+      _error = _t('Erreur d\'analyse : $e', 'خطأ في التحليل: $e');
     } finally {
       if (mounted) setState(() => _loading = false);
-    }
-  }
-
-  Future<void> _diffuserAuxMagasins() async {
-    final part = _part;
-    final image = _image;
-    if (part == null || image == null) return;
-
-    setState(() => _diffusing = true);
-    try {
-      final id = await MarketplaceService.broadcastRequest(
-        photo: image,
-        pieceNom: part.nom,
-        reference: part.reference,
-        compatibilite: part.compatibilite,
-      );
-      if (!mounted) return;
-      setState(() => _diffusedRequestId = id);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Demande envoyée aux magasins abonnés.'),
-          action: SnackBarAction(
-            label: 'Suivre',
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => MesDemandesScreen(config: widget.config),
-              ),
-            ),
-          ),
-        ),
-      );
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Échec de la diffusion : $e')),
-      );
-    } finally {
-      if (mounted) setState(() => _diffusing = false);
     }
   }
 
@@ -110,10 +69,15 @@ class _PartsScreenState extends State<PartsScreen> {
     await launchUrl(uri, mode: LaunchMode.externalApplication);
   }
 
-  Future<void> _itineraire(String nomMagasin) async {
-    final query = Uri.encodeComponent('$nomMagasin El Bouni Annaba');
-    final uri = Uri.parse(
-        'https://www.google.com/maps/search/?api=1&query=$query');
+  /// Ouvre l'itinéraire. Utilise l'adresse précise du magasin quand elle
+  /// est connue (fiche de contact fournie à la réponse de la demande),
+  /// sinon retombe sur une recherche par nom.
+  Future<void> _itineraire(String nomMagasin, String adresse) async {
+    final query = adresse.isNotEmpty
+        ? Uri.encodeComponent(adresse)
+        : Uri.encodeComponent('$nomMagasin El Bouni Annaba');
+    final uri =
+        Uri.parse('https://www.google.com/maps/search/?api=1&query=$query');
     await launchUrl(uri, mode: LaunchMode.externalApplication);
   }
 
@@ -126,29 +90,15 @@ class _PartsScreenState extends State<PartsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text('Pièces détachées',
-                      style: Theme.of(context).textTheme.headlineSmall),
-                ),
-                TextButton.icon(
-                  onPressed: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) =>
-                          MesDemandesScreen(config: widget.config),
-                    ),
-                  ),
-                  icon: const Icon(Icons.list_alt, size: 18),
-                  label: const Text('Mes demandes'),
-                ),
-              ],
-            ),
+            Text(_t('Pièces détachées', 'قطع الغيار'),
+                style: Theme.of(context).textTheme.headlineSmall),
             const SizedBox(height: 4),
-            const Text(
-              'Photographie la pièce cassée pour trouver référence et prix.',
-              style: TextStyle(color: Colors.black54),
+            Text(
+              _t(
+                'Photographie la pièce cassée pour trouver référence et prix.',
+                'صوّر القطعة المكسورة لمعرفة المرجع والسعر.',
+              ),
+              style: const TextStyle(color: Colors.black54),
             ),
             const SizedBox(height: 16),
             Row(
@@ -158,7 +108,7 @@ class _PartsScreenState extends State<PartsScreen> {
                     onPressed:
                         _loading ? null : () => _pickImage(ImageSource.camera),
                     icon: const Icon(Icons.camera_alt),
-                    label: const Text('Caméra Pièce'),
+                    label: Text(_t('Caméra Pièce', 'الكاميرا')),
                     style: ElevatedButton.styleFrom(
                       minimumSize: const Size.fromHeight(50),
                       backgroundColor: widget.config.primaryColor,
@@ -172,7 +122,7 @@ class _PartsScreenState extends State<PartsScreen> {
                     onPressed:
                         _loading ? null : () => _pickImage(ImageSource.gallery),
                     icon: const Icon(Icons.photo_library),
-                    label: const Text('Galerie'),
+                    label: Text(_t('Galerie', 'المعرض')),
                     style: OutlinedButton.styleFrom(
                       minimumSize: const Size.fromHeight(50),
                     ),
@@ -203,12 +153,13 @@ class _PartsScreenState extends State<PartsScreen> {
                     style: const TextStyle(color: Color(0xFF991B1B))),
               ),
             if (part != null) ...[
-              // Nom + référence + état
               Row(
                 children: [
                   Expanded(
                     child: Text(
-                      part.nom.isEmpty ? 'Pièce non identifiée' : part.nom,
+                      part.nom.isEmpty
+                          ? _t('Pièce non identifiée', 'قطعة غير محددة')
+                          : part.nom,
                       style: const TextStyle(
                           fontSize: 18, fontWeight: FontWeight.bold),
                     ),
@@ -234,7 +185,7 @@ class _PartsScreenState extends State<PartsScreen> {
               if (part.reference.isNotEmpty) ...[
                 const SizedBox(height: 4),
                 Text(
-                  'Réf: ${part.reference}',
+                  _t('Réf: ${part.reference}', 'المرجع: ${part.reference}'),
                   style: const TextStyle(
                       fontFamily: 'monospace',
                       fontSize: 14,
@@ -243,8 +194,8 @@ class _PartsScreenState extends State<PartsScreen> {
               ],
               if (part.compatibilite.isNotEmpty) ...[
                 const SizedBox(height: 12),
-                const Text('Compatibilité',
-                    style: TextStyle(fontWeight: FontWeight.w600)),
+                Text(_t('Compatibilité', 'التوافق'),
+                    style: const TextStyle(fontWeight: FontWeight.w600)),
                 const SizedBox(height: 4),
                 ...part.compatibilite.map(
                   (c) => Padding(
@@ -261,7 +212,6 @@ class _PartsScreenState extends State<PartsScreen> {
                 ),
               ],
               const SizedBox(height: 16),
-              // Carte prix
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(16),
@@ -275,8 +225,8 @@ class _PartsScreenState extends State<PartsScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text('Prix El Bouni',
-                              style: TextStyle(
+                          Text(_t('Prix El Bouni', 'سعر البوني'),
+                              style: const TextStyle(
                                   fontSize: 12, color: Colors.black54)),
                           Text(
                             '${part.prixDa} DA',
@@ -301,7 +251,10 @@ class _PartsScreenState extends State<PartsScreen> {
                             ),
                           ),
                           Text(
-                            'Économie: ${part.prixOrigine - part.prixDa} DA',
+                            _t(
+                              'Économie: ${part.prixOrigine - part.prixDa} DA',
+                              'توفير: ${part.prixOrigine - part.prixDa} DA',
+                            ),
                             style: const TextStyle(
                                 fontSize: 12, color: Color(0xFF166534)),
                           ),
@@ -312,10 +265,16 @@ class _PartsScreenState extends State<PartsScreen> {
                 ),
               ),
               const SizedBox(height: 16),
+              // Fiche de contact des magasins qui ont répondu à la demande :
+              // apparaît uniquement une fois qu'un magasin a effectivement
+              // répondu (part.magasins n'est jamais rempli automatiquement
+              // par l'IA — voir note dans gemini_service.dart). Nom,
+              // adresse, téléphone et itinéraire sont affichés en une carte
+              // pour éviter de dépendre de l'onglet Carte.
               if (part.magasins.isNotEmpty) ...[
-                const Text('Magasins',
-                    style:
-                        TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                Text(_t('Magasins qui ont répondu', 'المتاجر التي ردت'),
+                    style: const TextStyle(
+                        fontWeight: FontWeight.bold, fontSize: 15)),
                 const SizedBox(height: 8),
                 ...part.magasins.map((m) => Container(
                       margin: const EdgeInsets.only(bottom: 10),
@@ -332,13 +291,46 @@ class _PartsScreenState extends State<PartsScreen> {
                               Expanded(
                                 child: Text(m.nom,
                                     style: const TextStyle(
-                                        fontWeight: FontWeight.w600)),
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 15)),
                               ),
                               Text('${m.prix} DA',
                                   style: const TextStyle(
                                       fontWeight: FontWeight.bold)),
                             ],
                           ),
+                          if (m.adresse.isNotEmpty)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 4),
+                              child: Row(
+                                children: [
+                                  Icon(Icons.location_on_outlined,
+                                      size: 15, color: Colors.grey.shade600),
+                                  const SizedBox(width: 4),
+                                  Expanded(
+                                    child: Text(m.adresse,
+                                        style: const TextStyle(
+                                            fontSize: 12,
+                                            color: Colors.black54)),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          if (m.tel.isNotEmpty)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 2),
+                              child: Row(
+                                children: [
+                                  Icon(Icons.phone_outlined,
+                                      size: 15, color: Colors.grey.shade600),
+                                  const SizedBox(width: 4),
+                                  Text(m.tel,
+                                      style: const TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.black54)),
+                                ],
+                              ),
+                            ),
                           if (m.stock.isNotEmpty)
                             Padding(
                               padding: const EdgeInsets.only(top: 2),
@@ -354,7 +346,7 @@ class _PartsScreenState extends State<PartsScreen> {
                                   child: OutlinedButton.icon(
                                     onPressed: () => _call(m.tel),
                                     icon: const Icon(Icons.call, size: 16),
-                                    label: const Text('Appeler'),
+                                    label: Text(_t('Appeler', 'اتصال')),
                                   ),
                                 ),
                                 const SizedBox(width: 6),
@@ -369,9 +361,10 @@ class _PartsScreenState extends State<PartsScreen> {
                               ],
                               Expanded(
                                 child: OutlinedButton.icon(
-                                  onPressed: () => _itineraire(m.nom),
+                                  onPressed: () =>
+                                      _itineraire(m.nom, m.adresse),
                                   icon: const Icon(Icons.directions, size: 16),
-                                  label: const Text('Itinéraire'),
+                                  label: Text(_t('Itinéraire', 'الاتجاهات')),
                                 ),
                               ),
                             ],
@@ -379,9 +372,37 @@ class _PartsScreenState extends State<PartsScreen> {
                         ],
                       ),
                     )),
+              ] else ...[
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade100,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.hourglass_empty,
+                          size: 18, color: Colors.grey.shade600),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          _t(
+                            'En attente de réponse des magasins. Leur fiche '
+                            'de contact (nom, adresse, téléphone) '
+                            'apparaîtra ici dès qu\'un magasin répondra.',
+                            'في انتظار رد المتاجر. ستظهر هنا بطاقة الاتصال '
+                            '(الاسم، العنوان، الهاتف) فور رد أحد المتاجر.',
+                          ),
+                          style: const TextStyle(
+                              fontSize: 12, color: Colors.black54),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ],
               if (part.conseils.isNotEmpty) ...[
-                const SizedBox(height: 4),
+                const SizedBox(height: 12),
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
@@ -392,55 +413,14 @@ class _PartsScreenState extends State<PartsScreen> {
                       style: const TextStyle(fontSize: 13)),
                 ),
                 const SizedBox(height: 16),
-              ],
-              if (_diffusedRequestId == null)
-                ElevatedButton.icon(
-                  onPressed: _diffusing ? null : _diffuserAuxMagasins,
-                  icon: _diffusing
-                      ? const SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(
-                              strokeWidth: 2, color: Colors.white),
-                        )
-                      : const Icon(Icons.campaign),
-                  label: Text(_diffusing
-                      ? 'Diffusion en cours...'
-                      : 'Diffuser aux magasins abonnés'),
-                  style: ElevatedButton.styleFrom(
-                    minimumSize: const Size.fromHeight(50),
-                    backgroundColor: widget.config.primaryColor,
-                    foregroundColor: Colors.white,
-                  ),
-                )
-              else
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFDCFCE7),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.check_circle,
-                          color: Color(0xFF166534)),
-                      const SizedBox(width: 8),
-                      const Expanded(
-                        child: Text(
-                          'Demande envoyée. Les magasins abonnés vont te '
-                          'répondre avec leur prix.',
-                          style: TextStyle(
-                              color: Color(0xFF166534), fontSize: 13),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              const SizedBox(height: 8),
+              ] else
+                const SizedBox(height: 16),
               ElevatedButton(
                 onPressed: () {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Commande enregistrée.')),
+                    SnackBar(
+                        content: Text(_t('Demande envoyée aux magasins.',
+                            'تم إرسال الطلب إلى المتاجر.'))),
                   );
                 },
                 style: ElevatedButton.styleFrom(
@@ -448,7 +428,7 @@ class _PartsScreenState extends State<PartsScreen> {
                   backgroundColor: Colors.black,
                   foregroundColor: Colors.white,
                 ),
-                child: const Text('Commander (El Bouni)'),
+                child: Text(_t('Envoyer la demande', 'إرسال الطلب')),
               ),
             ],
           ],

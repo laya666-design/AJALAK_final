@@ -39,23 +39,32 @@ class _AjalakAppState extends State<AjalakApp> {
   @override
   Widget build(BuildContext context) {
     final config = AppConfig.current();
-    return MaterialApp(
-      title: config.appName,
-      debugShowCheckedModeBanner: false,
-      localizationsDelegates: const [
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
-      supportedLocales: const [Locale('fr'), Locale('ar')],
-      theme: ThemeData(
-        useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: config.primaryColor,
-          primary: config.primaryColor,
-        ),
-      ),
-      home: HomeScreen(config: config, isAr: isAr),
+    return ValueListenableBuilder<bool>(
+      valueListenable: isAr,
+      builder: (context, arActive, _) {
+        return MaterialApp(
+          title: config.appName,
+          debugShowCheckedModeBanner: false,
+          // Bug corrigé : la locale n'était jamais transmise au MaterialApp,
+          // donc seuls les libellés traduits à la main changeaient, pas les
+          // widgets système (dates, etc.) ni la direction par défaut.
+          locale: arActive ? const Locale('ar') : const Locale('fr'),
+          localizationsDelegates: const [
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: const [Locale('fr'), Locale('ar')],
+          theme: ThemeData(
+            useMaterial3: true,
+            colorScheme: ColorScheme.fromSeed(
+              seedColor: config.primaryColor,
+              primary: config.primaryColor,
+            ),
+          ),
+          home: HomeScreen(config: config, isAr: isAr),
+        );
+      },
     );
   }
 }

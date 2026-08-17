@@ -8,7 +8,6 @@ import '../services/notification_service.dart';
 import '../services/ocr_service.dart';
 import '../services/vehicule.dart';
 import '../services/vehicule_service.dart';
-import '../widgets/partner_banner.dart';
 import '../widgets/status_card.dart';
 
 class InsuranceScreen extends StatefulWidget {
@@ -223,11 +222,6 @@ class _InsuranceScreenState extends State<InsuranceScreen> {
             if (_status != null) ...[
               StatusCard(status: _status!),
               const SizedBox(height: 16),
-              if (_status!.level != StatusLevel.ok)
-                PartnerBanner(
-                  daysRemaining: _status!.daysRemaining,
-                  isExpired: _status!.isExpired,
-                ),
             ],
             if (_info != null &&
                 (_info!.compagnie.isNotEmpty ||

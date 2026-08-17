@@ -9,6 +9,7 @@ import 'insurance_screen.dart';
 
 class VehiclesScreen extends StatefulWidget {
   final AppConfig config;
+  final bool isAr;
 
   /// Catégories affichées dans cette rubrique. ex: [TypeVehicule.voiture]
   /// pour la rubrique "Véhicules", ou [TypeVehicule.moto,
@@ -16,21 +17,30 @@ class VehiclesScreen extends StatefulWidget {
   final List<String> types;
 
   final String titre;
+  final String titreAr;
   final String sousTitre;
+  final String sousTitreAr;
   final IconData iconePrincipale;
   final String labelAjout;
+  final String labelAjoutAr;
   final String labelVide;
+  final String labelVideAr;
 
   const VehiclesScreen({
     super.key,
     required this.config,
+    this.isAr = false,
     this.types = const [TypeVehicule.voiture],
     this.titre = 'Mes véhicules',
+    this.titreAr = 'سياراتي',
     this.sousTitre =
         'Assurance, vignette et contrôle technique, par véhicule.',
+    this.sousTitreAr = 'التأمين والرخصة والفحص التقني، لكل سيارة.',
     this.iconePrincipale = Icons.directions_car,
     this.labelAjout = 'Ajouter un véhicule',
+    this.labelAjoutAr = 'إضافة سيارة',
     this.labelVide = 'Aucun véhicule pour le moment',
+    this.labelVideAr = 'لا توجد سيارة حتى الآن',
   });
 
   @override
@@ -39,6 +49,14 @@ class VehiclesScreen extends StatefulWidget {
 
 class _VehiclesScreenState extends State<VehiclesScreen> {
   List<Vehicule> _vehicules = [];
+
+  bool get _ar => widget.isAr;
+  String get _titre => _ar ? widget.titreAr : widget.titre;
+  String get _sousTitre => _ar ? widget.sousTitreAr : widget.sousTitre;
+  String get _labelAjout => _ar ? widget.labelAjoutAr : widget.labelAjout;
+  String get _labelVide => _ar ? widget.labelVideAr : widget.labelVide;
+
+  String _t(String fr, String ar) => _ar ? ar : fr;
 
   @override
   void initState() {
@@ -64,37 +82,44 @@ class _VehiclesScreenState extends State<VehiclesScreen> {
   String _labelForType(String type) {
     switch (type) {
       case TypeVehicule.moto:
-        return 'Moto';
+        return _t('Moto', 'دراجة نارية');
       case TypeVehicule.scooter:
-        return 'Scooter';
+        return _t('Scooter', 'دراجة سكوتر');
       default:
-        return 'Voiture';
+        return _t('Voiture', 'سيارة');
     }
   }
 
-  Future<void> _openAddDialog() async {
-    final isPremium = SettingsService.isPremium;
-    final canAddFree = VehiculeService.canAddFreeForTypes(widget.types);
+  /// Dialogue partagé pour l'ajout ET la modification d'un véhicule.
+  /// Si [existing] est fourni, le formulaire est pré-rempli et on met à
+  /// jour ce véhicule au lieu d'en créer un nouveau.
+  Future<void> _openVehicleFormDialog({Vehicule? existing}) async {
+    final isEdit = existing != null;
 
-    if (!isPremium && !canAddFree) {
-      _showPremiumSheet();
-      return;
+    if (!isEdit) {
+      final isPremium = SettingsService.isPremium;
+      final canAddFree = VehiculeService.canAddFreeForTypes(widget.types);
+      if (!isPremium && !canAddFree) {
+        _showPremiumSheet();
+        return;
+      }
     }
 
-    final nomController = TextEditingController();
-    final marqueController = TextEditingController();
-    String selectedType = widget.types.first;
+    final nomController = TextEditingController(text: existing?.nom ?? '');
+    final marqueController =
+        TextEditingController(text: existing?.marque ?? '');
+    String selectedType = existing?.type ?? widget.types.first;
 
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setDialogState) => AlertDialog(
-          title: Text(widget.labelAjout),
+          title: Text(isEdit
+              ? _t('Modifier le véhicule', 'تعديل المركبة')
+              : _labelAjout),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Sélecteur de catégorie : uniquement si la rubrique regroupe
-              // plusieurs types (ex: Motos & scooters).
               if (widget.types.length > 1) ...[
                 SegmentedButton<String>(
                   segments: widget.types
@@ -113,10 +138,10 @@ class _VehiclesScreenState extends State<VehiclesScreen> {
               TextField(
                 controller: nomController,
                 decoration: InputDecoration(
-                  labelText: 'Nom',
+                  labelText: _t('Nom', 'الاسم'),
                   hintText: widget.types.contains(TypeVehicule.voiture)
-                      ? 'ex: Peugeot 208'
-                      : 'ex: Yamaha 125',
+                      ? _t('ex: Peugeot 208', 'مثال: بيجو 208')
+                      : _t('ex: Yamaha 125', 'مثال: ياماها 125'),
                 ),
                 autofocus: true,
                 onChanged: (_) => setDialogState(() {}),
@@ -124,8 +149,9 @@ class _VehiclesScreenState extends State<VehiclesScreen> {
               const SizedBox(height: 12),
               TextField(
                 controller: marqueController,
-                decoration: const InputDecoration(
-                  labelText: 'Marque / modèle (optionnel)',
+                decoration: InputDecoration(
+                  labelText: _t('Marque / modèle (optionnel)',
+                      'الماركة / الطراز (اختياري)'),
                 ),
               ),
             ],
@@ -133,13 +159,14 @@ class _VehiclesScreenState extends State<VehiclesScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Annuler'),
+              child: Text(_t('Annuler', 'إلغاء')),
             ),
             FilledButton(
               onPressed: nomController.text.trim().isEmpty
                   ? null
                   : () => Navigator.pop(ctx, true),
-              child: const Text('Ajouter'),
+              child: Text(
+                  isEdit ? _t('Enregistrer', 'حفظ') : _t('Ajouter', 'إضافة')),
             ),
           ],
         ),
@@ -148,14 +175,63 @@ class _VehiclesScreenState extends State<VehiclesScreen> {
 
     if (ok != true || nomController.text.trim().isEmpty) return;
 
-    final v = Vehicule(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      nom: nomController.text.trim(),
-      marque: marqueController.text.trim(),
-      type: selectedType,
-    );
-    await VehiculeService.add(v);
+    if (isEdit) {
+      existing.nom = nomController.text.trim();
+      existing.marque = marqueController.text.trim();
+      existing.type = selectedType;
+      await VehiculeService.update(existing);
+    } else {
+      final v = Vehicule(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        nom: nomController.text.trim(),
+        marque: marqueController.text.trim(),
+        type: selectedType,
+      );
+      await VehiculeService.add(v);
+    }
     _refresh();
+  }
+
+  Future<void> _confirmDelete(Vehicule v) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(_t('Supprimer ce véhicule ?', 'حذف هذه المركبة؟')),
+        content: Text(
+          _t(
+            'Cette action est définitive. "${v.nom}" et toutes ses données '
+            '(assurance, contrôle technique) seront supprimées.',
+            'هذا الإجراء نهائي. سيتم حذف "${v.nom}" وجميع بياناته '
+            '(التأمين، الفحص التقني).',
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(_t('Annuler', 'إلغاء')),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(_t('Supprimer', 'حذف')),
+          ),
+        ],
+      ),
+    );
+
+    if (ok != true) return;
+
+    await VehiculeService.delete(v.id);
+    _refresh();
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content:
+              Text(_t('"${v.nom}" a été supprimé.', 'تم حذف "${v.nom}".')),
+        ),
+      );
+    }
   }
 
   void _showPremiumSheet() {
@@ -173,25 +249,34 @@ class _VehiclesScreenState extends State<VehiclesScreen> {
                   Icon(Icons.workspace_premium,
                       color: widget.config.primaryColor, size: 28),
                   const SizedBox(width: 8),
-                  const Text('Passe en Premium',
-                      style: TextStyle(
+                  Text(_t('Passe en Premium', 'الترقية إلى Premium'),
+                      style: const TextStyle(
                           fontSize: 18, fontWeight: FontWeight.bold)),
                 ],
               ),
               const SizedBox(height: 12),
-              const Text(
-                'La version gratuite permet de gérer 1 élément dans cette '
-                'rubrique. Passe en Premium pour en ajouter sans limite, '
-                'et pour activer les rappels par SMS et appel.',
+              Text(
+                _t(
+                  'La version gratuite permet de gérer 1 élément dans cette '
+                  'rubrique. Passe en Premium pour en ajouter sans limite, '
+                  'et pour activer les rappels par SMS et appel.',
+                  'تسمح النسخة المجانية بإدارة عنصر واحد فقط في هذا القسم. '
+                  'قم بالترقية إلى Premium لإضافة عناصر بلا حدود، وتفعيل '
+                  'التذكيرات عبر الرسائل النصية والمكالمات.',
+                ),
               ),
               const SizedBox(height: 16),
               SwitchListTile(
                 contentPadding: EdgeInsets.zero,
-                title: const Text('Rappels par SMS / Appel'),
-                subtitle: const Text(
-                  'En plus des notifications sur le téléphone. '
-                  'Bientôt disponible.',
-                  style: TextStyle(fontSize: 12),
+                title: Text(
+                    _t('Rappels par SMS / Appel', 'تذكيرات عبر SMS / مكالمة')),
+                subtitle: Text(
+                  _t(
+                    'En plus des notifications sur le téléphone. '
+                    'Bientôt disponible.',
+                    'بالإضافة إلى إشعارات الهاتف. قريباً.',
+                  ),
+                  style: const TextStyle(fontSize: 12),
                 ),
                 value: SettingsService.smsRemindersEnabled,
                 onChanged: (val) async {
@@ -207,13 +292,9 @@ class _VehiclesScreenState extends State<VehiclesScreen> {
                     backgroundColor: widget.config.primaryColor,
                   ),
                   onPressed: () {
-                    // Mock Phase 1 : pas de vrai paiement, juste le flag
-                    // local. À remplacer par une vraie logique d'achat
-                    // in-app. Le SMS/Appel nécessite en plus un service
-                    // tiers (ex: Twilio) + un backend pour l'envoi réel.
                     Navigator.pop(ctx);
                   },
-                  child: const Text('Bientôt disponible'),
+                  child: Text(_t('Bientôt disponible', 'قريباً')),
                 ),
               ),
             ],
@@ -234,11 +315,15 @@ class _VehiclesScreenState extends State<VehiclesScreen> {
               backgroundColor: widget.config.primaryColor,
               foregroundColor: Colors.white,
               title: Text(v.nom),
-              bottom: const TabBar(
+              bottom: TabBar(
                 indicatorColor: Colors.white,
                 tabs: [
-                  Tab(icon: Icon(Icons.security), text: 'Assurance'),
-                  Tab(icon: Icon(Icons.fact_check), text: 'Contrôle technique'),
+                  Tab(
+                      icon: const Icon(Icons.security),
+                      text: _t('Assurance', 'التأمين')),
+                  Tab(
+                      icon: const Icon(Icons.fact_check),
+                      text: _t('Contrôle technique', 'الفحص التقني')),
                 ],
               ),
             ),
@@ -287,9 +372,12 @@ class _VehiclesScreenState extends State<VehiclesScreen> {
       ),
       child: Text(
         status.isExpired
-            ? 'Expiré depuis ${status.daysRemaining.abs()}j'
-            : '${status.daysRemaining}j restants',
-        style: TextStyle(color: fg, fontSize: 12, fontWeight: FontWeight.w600),
+            ? _t('Expiré depuis ${status.daysRemaining.abs()}j',
+                'منتهي منذ ${status.daysRemaining.abs()} يوم')
+            : _t('${status.daysRemaining}j restants',
+                'باقي ${status.daysRemaining} يوم'),
+        style:
+            TextStyle(color: fg, fontSize: 12, fontWeight: FontWeight.w600),
       ),
     );
   }
@@ -297,8 +385,8 @@ class _VehiclesScreenState extends State<VehiclesScreen> {
   @override
   Widget build(BuildContext context) {
     final isPremium = SettingsService.isPremium;
-    final showLockedCard = !isPremium &&
-        _vehicules.length >= VehiculeService.freeLimit;
+    final showLockedCard =
+        !isPremium && _vehicules.length >= VehiculeService.freeLimit;
 
     return SafeArea(
       child: RefreshIndicator(
@@ -306,9 +394,9 @@ class _VehiclesScreenState extends State<VehiclesScreen> {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            Text(widget.titre, style: Theme.of(context).textTheme.headlineSmall),
+            Text(_titre, style: Theme.of(context).textTheme.headlineSmall),
             const SizedBox(height: 4),
-            Text(widget.sousTitre, style: const TextStyle(color: Colors.black54)),
+            Text(_sousTitre, style: const TextStyle(color: Colors.black54)),
             const SizedBox(height: 12),
             const AdBanner(),
             const SizedBox(height: 4),
@@ -321,7 +409,7 @@ class _VehiclesScreenState extends State<VehiclesScreen> {
                       Icon(widget.iconePrincipale,
                           size: 48, color: Colors.grey.shade400),
                       const SizedBox(height: 8),
-                      Text(widget.labelVide,
+                      Text(_labelVide,
                           style: const TextStyle(color: Colors.black54)),
                     ],
                   ),
@@ -330,13 +418,16 @@ class _VehiclesScreenState extends State<VehiclesScreen> {
             ..._vehicules.map((v) => Card(
                   margin: const EdgeInsets.only(bottom: 12),
                   child: ListTile(
-                    contentPadding: const EdgeInsets.all(12),
+                    contentPadding: const EdgeInsets.only(
+                        left: 12, top: 12, bottom: 12, right: 4),
                     leading: CircleAvatar(
-                      backgroundColor: widget.config.primaryColor.withOpacity(0.1),
+                      backgroundColor:
+                          widget.config.primaryColor.withOpacity(0.1),
                       foregroundColor: widget.config.primaryColor,
                       child: Icon(_iconForType(v.type)),
                     ),
-                    title: Text(v.nom, style: const TextStyle(fontWeight: FontWeight.w600)),
+                    title: Text(v.nom,
+                        style: const TextStyle(fontWeight: FontWeight.w600)),
                     subtitle: Padding(
                       padding: const EdgeInsets.only(top: 6),
                       child: Wrap(
@@ -351,12 +442,35 @@ class _VehiclesScreenState extends State<VehiclesScreen> {
                               backgroundColor:
                                   widget.config.primaryColor.withOpacity(0.08),
                             ),
-                          _statusChip(v.assuranceExpiration, 'Assurance non renseignée'),
-                          _statusChip(v.controleTechniqueExpiration, 'CT non renseigné'),
+                          _statusChip(
+                              v.assuranceExpiration,
+                              _t('Assurance non renseignée',
+                                  'التأمين غير محدد')),
+                          _statusChip(
+                              v.controleTechniqueExpiration,
+                              _t('CT non renseigné',
+                                  'الفحص التقني غير محدد')),
                         ],
                       ),
                     ),
-                    trailing: const Icon(Icons.chevron_right),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          tooltip: _t('Modifier', 'تعديل'),
+                          icon: const Icon(Icons.edit_outlined, size: 20),
+                          onPressed: () =>
+                              _openVehicleFormDialog(existing: v),
+                        ),
+                        IconButton(
+                          tooltip: _t('Supprimer', 'حذف'),
+                          icon: const Icon(Icons.delete_outline,
+                              size: 20, color: Colors.red),
+                          onPressed: () => _confirmDelete(v),
+                        ),
+                        const Icon(Icons.chevron_right, color: Colors.black38),
+                      ],
+                    ),
                     onTap: () => _openVehicle(v),
                   ),
                 )),
@@ -366,12 +480,15 @@ class _VehiclesScreenState extends State<VehiclesScreen> {
                 color: Colors.grey.shade100,
                 child: ListTile(
                   contentPadding: const EdgeInsets.all(12),
-                  leading: const Icon(Icons.lock_outline, color: Colors.black45),
-                  title: const Text('Élément suivant',
-                      style: TextStyle(fontWeight: FontWeight.w600)),
-                  subtitle: const Text('Réservé aux comptes Premium'),
+                  leading:
+                      const Icon(Icons.lock_outline, color: Colors.black45),
+                  title: Text(_t('Élément suivant', 'العنصر التالي'),
+                      style: const TextStyle(fontWeight: FontWeight.w600)),
+                  subtitle: Text(_t(
+                      'Réservé aux comptes Premium', 'حصري لحسابات Premium')),
                   trailing: Chip(
-                    label: const Text('Premium', style: TextStyle(fontSize: 11, color: Colors.white)),
+                    label: const Text('Premium',
+                        style: TextStyle(fontSize: 11, color: Colors.white)),
                     backgroundColor: widget.config.primaryColor,
                   ),
                   onTap: _showPremiumSheet,
@@ -381,10 +498,11 @@ class _VehiclesScreenState extends State<VehiclesScreen> {
               SizedBox(
                 width: double.infinity,
                 child: OutlinedButton.icon(
-                  onPressed: _openAddDialog,
+                  onPressed: () => _openVehicleFormDialog(),
                   icon: const Icon(Icons.add),
-                  label: Text(widget.labelAjout),
-                  style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(48)),
+                  label: Text(_labelAjout),
+                  style: OutlinedButton.styleFrom(
+                      minimumSize: const Size.fromHeight(48)),
                 ),
               ),
           ],

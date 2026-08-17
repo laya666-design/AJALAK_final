@@ -54,12 +54,14 @@ class StoreOffer {
   final num prix;
   final String tel;
   final String stock;
+  final String adresse;
 
   StoreOffer({
     required this.nom,
     required this.prix,
     this.tel = '',
     this.stock = '',
+    this.adresse = '',
   });
 
   factory StoreOffer.fromJson(Map<String, dynamic> json) {
@@ -68,6 +70,7 @@ class StoreOffer {
       prix: (json['prix'] is num) ? json['prix'] as num : 0,
       tel: json['tel']?.toString() ?? '',
       stock: json['stock']?.toString() ?? '',
+      adresse: json['adresse']?.toString() ?? '',
     );
   }
 }
