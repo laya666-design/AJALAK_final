@@ -87,4 +87,22 @@ class MarketplaceService {
         .doc(requestId)
         .update({'statut': 'closed'});
   }
+
+  /// Marque la demande comme vendue chez le magasin sélectionné : elle
+  /// disparaît immédiatement des demandes ouvertes des magasins (la tâche
+  /// est "terminée") et garde une trace de qui l'a vendue.
+  static Future<void> markAsSold({
+    required String requestId,
+    required PartOffer offer,
+  }) async {
+    await FirebaseFirestore.instance
+        .collection(_requestsCollection)
+        .doc(requestId)
+        .update({
+      'statut': 'vendu',
+      'soldToStoreId': offer.storeId,
+      'soldToStoreNom': offer.storeNom,
+      'dateVente': FieldValue.serverTimestamp(),
+    });
+  }
 }

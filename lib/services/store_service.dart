@@ -1,7 +1,13 @@
+import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'marketplace_models.dart';
+
+/// Prix de l'abonnement mensuel magasin, en DA.
+const int kAbonnementPrixMensuelDA = 2000;
+const int kEssaiGratuitJours = 30;
 
 /// Marketplace pièces — côté magasin ("Espace Pro").
 ///
@@ -34,6 +40,9 @@ class StoreService {
       tel: tel,
       adresse: adresse,
       actif: false,
+      subscriptionStatus: SubscriptionStatus.essai,
+      trialEndDate:
+          DateTime.now().add(const Duration(days: kEssaiGratuitJours)),
     );
     await FirebaseFirestore.instance
         .collection(_storesCollection)
@@ -119,5 +128,69 @@ class StoreService {
         .collection('offers')
         .doc(profile.uid) // un seul prix par magasin, ré-écrasable
         .set(offer.toMap());
+  }
+
+  /// Envoie une preuve de paiement (photo du reçu) pour activer ou
+  /// renouveler l'abonnement. Statut mis en 'paiement_en_attente' :
+  /// validation manuelle par l'équipe (comme pour `actif`), qui bascule
+  /// ensuite le magasin sur `subscriptionStatus = 'actif'` avec une
+  /// nouvelle `subscriptionEndDate` (+30 jours) depuis la console Firebase
+  /// ou via la Cloud Function d'administration.
+  static Future<void> submitPaymentProof({
+    required File recu,
+    required num montant,
+    required String methode,
+  }) async {
+    final uid = currentUser?.uid;
+    if (uid == null) throw Exception('Non connecté.');
+
+    final id = FirebaseFirestore.instance
+        .collection(_storesCollection)
+        .doc(uid)
+        .collection('payment_requests')
+        .doc()
+        .id;
+
+    final ref = FirebaseStorage.instance.ref('payment_proofs/$uid/$id.jpg');
+    await ref.putFile(recu);
+    final recuUrl = await ref.getDownloadURL();
+
+    final payment = PaymentRequest(
+      id: id,
+      storeId: uid,
+      montant: montant,
+      methode: methode,
+      recuUrl: recuUrl,
+      statut: 'en_attente',
+      dateEnvoi: DateTime.now(),
+    );
+
+    await FirebaseFirestore.instance
+        .collection(_storesCollection)
+        .doc(uid)
+        .collection('payment_requests')
+        .doc(id)
+        .set(payment.toMap());
+
+    // Le magasin passe en "paiement en attente" : il perd l'accès aux
+    // demandes dès la fin de son essai/abonnement en cours, jusqu'à
+    // validation manuelle du paiement.
+    await FirebaseFirestore.instance
+        .collection(_storesCollection)
+        .doc(uid)
+        .update({'subscriptionStatus': SubscriptionStatus.enAttente});
+  }
+
+  /// Historique des demandes de paiement du magasin connecté.
+  static Stream<List<PaymentRequest>> myPaymentRequests() {
+    final uid = currentUser?.uid;
+    if (uid == null) return const Stream.empty();
+    return FirebaseFirestore.instance
+        .collection(_storesCollection)
+        .doc(uid)
+        .collection('payment_requests')
+        .orderBy('dateEnvoi', descending: true)
+        .snapshots()
+        .map((s) => s.docs.map(PaymentRequest.fromDoc).toList());
   }
 }

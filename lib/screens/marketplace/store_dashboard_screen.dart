@@ -3,6 +3,7 @@ import '../../config/app_config.dart';
 import '../../services/marketplace_models.dart';
 import '../../services/store_service.dart';
 import 'store_login_screen.dart';
+import 'subscription_screen.dart';
 
 class StoreDashboardScreen extends StatefulWidget {
   final AppConfig config;
@@ -121,6 +122,21 @@ class _StoreDashboardScreenState extends State<StoreDashboardScreen> {
             ? profile!.nom
             : 'Espace Pro'),
         actions: [
+          if (profile != null && profile.actif)
+            IconButton(
+              tooltip: 'Mon abonnement',
+              onPressed: () async {
+                await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => SubscriptionScreen(
+                        config: widget.config, profile: profile),
+                  ),
+                );
+                _loadProfile();
+              },
+              icon: const Icon(Icons.workspace_premium_outlined),
+            ),
           IconButton(
             onPressed: _logout,
             icon: const Icon(Icons.logout),
@@ -140,7 +156,50 @@ class _StoreDashboardScreenState extends State<StoreDashboardScreen> {
                     ),
                   ),
                 )
-              : StreamBuilder<List<PartRequest>>(
+              : !profile.accesDemandesAutorise
+                  ? Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.lock_clock,
+                                size: 48, color: widget.config.primaryColor),
+                            const SizedBox(height: 16),
+                            Text(
+                              profile.subscriptionStatus ==
+                                      SubscriptionStatus.enAttente
+                                  ? 'Ton paiement est en cours de vérification.'
+                                  : 'Ton essai gratuit ou ton abonnement est '
+                                      'terminé.\nAbonne-toi pour continuer à '
+                                      'recevoir des demandes.',
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 20),
+                            if (profile.subscriptionStatus !=
+                                SubscriptionStatus.enAttente)
+                              FilledButton(
+                                style: FilledButton.styleFrom(
+                                    backgroundColor:
+                                        widget.config.primaryColor),
+                                onPressed: () async {
+                                  await Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => SubscriptionScreen(
+                                          config: widget.config,
+                                          profile: profile),
+                                    ),
+                                  );
+                                  _loadProfile();
+                                },
+                                child: const Text('Voir mon abonnement'),
+                              ),
+                          ],
+                        ),
+                      ),
+                    )
+                  : StreamBuilder<List<PartRequest>>(
                   stream: StoreService.openRequests(),
                   builder: (context, snapshot) {
                     if (snapshot.connectionState ==

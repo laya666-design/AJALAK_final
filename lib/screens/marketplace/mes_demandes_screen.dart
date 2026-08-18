@@ -13,6 +13,55 @@ class MesDemandesScreen extends StatelessWidget {
     await launchUrl(Uri(scheme: 'tel', path: tel));
   }
 
+  Future<void> _marquerVendu(
+      BuildContext context, PartRequest r, PartOffer o) async {
+    final confirme = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Marquer comme vendue'),
+        content: Text(
+          'Confirmer que "${r.pieceNom}" a été achetée chez '
+          '${o.storeNom.isEmpty ? 'ce magasin' : o.storeNom} '
+          '(${o.prix} DA) ?\n\nLa demande sera clôturée.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Annuler'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Confirmer'),
+          ),
+        ],
+      ),
+    );
+    if (confirme != true) return;
+    await MarketplaceService.markAsSold(requestId: r.id, offer: o);
+  }
+
+  String _statutLabel(PartRequest r) {
+    switch (r.statut) {
+      case 'open':
+        return 'En attente de réponses';
+      case 'vendu':
+        return 'Vendue chez ${r.soldToStoreNom ?? ''}';
+      default:
+        return 'Clôturée';
+    }
+  }
+
+  Color _statutColor(PartRequest r) {
+    switch (r.statut) {
+      case 'open':
+        return Colors.orange;
+      case 'vendu':
+        return Colors.green;
+      default:
+        return Colors.grey;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -58,13 +107,21 @@ class MesDemandesScreen extends StatelessWidget {
                       : const Icon(Icons.build),
                   title: Text(r.pieceNom.isEmpty ? 'Pièce' : r.pieceNom),
                   subtitle: Text(
-                    r.statut == 'open' ? 'En attente de réponses' : 'Clôturée',
+                    _statutLabel(r),
                     style: TextStyle(
-                      color: r.statut == 'open' ? Colors.orange : Colors.grey,
+                      color: _statutColor(r),
                       fontSize: 12,
                     ),
                   ),
                   children: [
+                    if (!r.estOuverte && !r.estVendue)
+                      const Padding(
+                        padding: EdgeInsets.all(16),
+                        child: Text('Demande clôturée.',
+                            style: TextStyle(
+                                fontSize: 13, color: Colors.black54)),
+                      )
+                    else
                     StreamBuilder<List<PartOffer>>(
                       stream: MarketplaceService.offersFor(r.id),
                       builder: (context, offerSnap) {
@@ -115,6 +172,16 @@ class MesDemandesScreen extends StatelessWidget {
                                             icon: const Icon(Icons.call,
                                                 size: 20),
                                             onPressed: () => _call(o.storeTel),
+                                          ),
+                                        if (r.estOuverte)
+                                          IconButton(
+                                            tooltip: 'Marquer comme vendue',
+                                            icon: const Icon(
+                                                Icons.check_circle_outline,
+                                                size: 20,
+                                                color: Colors.green),
+                                            onPressed: () =>
+                                                _marquerVendu(context, r, o),
                                           ),
                                       ],
                                     ),

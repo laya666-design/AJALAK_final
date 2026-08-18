@@ -8,8 +8,11 @@ class PartRequest {
   final String reference;
   final List<String> compatibilite;
   final String photoUrl;
-  final String statut; // 'open' | 'closed'
+  final String statut; // 'open' | 'vendu' | 'closed'
   final DateTime dateCreation;
+  final String? soldToStoreId;
+  final String? soldToStoreNom;
+  final DateTime? dateVente;
 
   PartRequest({
     required this.id,
@@ -20,7 +23,13 @@ class PartRequest {
     required this.photoUrl,
     required this.statut,
     required this.dateCreation,
+    this.soldToStoreId,
+    this.soldToStoreNom,
+    this.dateVente,
   });
+
+  bool get estVendue => statut == 'vendu';
+  bool get estOuverte => statut == 'open';
 
   factory PartRequest.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
     final d = doc.data() ?? {};
@@ -37,6 +46,9 @@ class PartRequest {
       statut: d['statut']?.toString() ?? 'open',
       dateCreation: (d['dateCreation'] as Timestamp?)?.toDate() ??
           DateTime.now(),
+      soldToStoreId: d['soldToStoreId']?.toString(),
+      soldToStoreNom: d['soldToStoreNom']?.toString(),
+      dateVente: (d['dateVente'] as Timestamp?)?.toDate(),
     );
   }
 
@@ -99,14 +111,25 @@ class PartOffer {
       };
 }
 
+/// Statuts d'abonnement possibles pour un magasin.
+class SubscriptionStatus {
+  static const essai = 'essai'; // mois d'essai gratuit
+  static const actif = 'actif'; // abonnement payé, en cours
+  static const enAttente = 'paiement_en_attente'; // preuve envoyée, à valider
+  static const expire = 'expire'; // essai ou abonnement terminé, non renouvelé
+}
+
 /// Profil d'un magasin abonné (compte Pro).
 class StoreProfile {
   final String uid;
   final String nom;
   final String tel;
   final String adresse;
-  final bool actif; // validé manuellement avant de recevoir des demandes
+  final bool actif; // identité validée manuellement (compte non-fake)
   final String? fcmToken;
+  final String subscriptionStatus; // voir SubscriptionStatus
+  final DateTime? trialEndDate;
+  final DateTime? subscriptionEndDate;
 
   StoreProfile({
     required this.uid,
@@ -115,7 +138,35 @@ class StoreProfile {
     required this.adresse,
     required this.actif,
     this.fcmToken,
+    this.subscriptionStatus = SubscriptionStatus.essai,
+    this.trialEndDate,
+    this.subscriptionEndDate,
   });
+
+  /// Le magasin a-t-il le droit de voir/répondre aux demandes en ce moment ?
+  /// (identité validée ET essai ou abonnement toujours en cours)
+  bool get accesDemandesAutorise {
+    if (!actif) return false;
+    final now = DateTime.now();
+    if (subscriptionStatus == SubscriptionStatus.essai) {
+      return trialEndDate != null && trialEndDate!.isAfter(now);
+    }
+    if (subscriptionStatus == SubscriptionStatus.actif) {
+      return subscriptionEndDate != null && subscriptionEndDate!.isAfter(now);
+    }
+    return false;
+  }
+
+  /// Jours restants sur l'essai ou l'abonnement en cours (0 si terminé).
+  int get joursRestants {
+    final now = DateTime.now();
+    final DateTime? fin = subscriptionStatus == SubscriptionStatus.essai
+        ? trialEndDate
+        : subscriptionEndDate;
+    if (fin == null) return 0;
+    final diff = fin.difference(now).inHours / 24;
+    return diff > 0 ? diff.ceil() : 0;
+  }
 
   factory StoreProfile.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
     final d = doc.data() ?? {};
@@ -126,6 +177,10 @@ class StoreProfile {
       adresse: d['adresse']?.toString() ?? '',
       actif: d['actif'] as bool? ?? false,
       fcmToken: d['fcmToken']?.toString(),
+      subscriptionStatus:
+          d['subscriptionStatus']?.toString() ?? SubscriptionStatus.essai,
+      trialEndDate: (d['trialEndDate'] as Timestamp?)?.toDate(),
+      subscriptionEndDate: (d['subscriptionEndDate'] as Timestamp?)?.toDate(),
     );
   }
 
@@ -135,5 +190,55 @@ class StoreProfile {
         'adresse': adresse,
         'actif': actif,
         if (fcmToken != null) 'fcmToken': fcmToken,
+        'subscriptionStatus': subscriptionStatus,
+        if (trialEndDate != null)
+          'trialEndDate': Timestamp.fromDate(trialEndDate!),
+        if (subscriptionEndDate != null)
+          'subscriptionEndDate': Timestamp.fromDate(subscriptionEndDate!),
+      };
+}
+
+/// Une preuve de paiement envoyée par un magasin (virement/CCP/Baridimob),
+/// en attente de validation manuelle avant activation de l'abonnement.
+class PaymentRequest {
+  final String id;
+  final String storeId;
+  final num montant;
+  final String methode; // 'Virement' | 'CCP' | 'Baridimob'
+  final String recuUrl;
+  final String statut; // 'en_attente' | 'valide' | 'refuse'
+  final DateTime dateEnvoi;
+
+  PaymentRequest({
+    required this.id,
+    required this.storeId,
+    required this.montant,
+    required this.methode,
+    required this.recuUrl,
+    required this.statut,
+    required this.dateEnvoi,
+  });
+
+  factory PaymentRequest.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
+    final d = doc.data() ?? {};
+    return PaymentRequest(
+      id: doc.id,
+      storeId: d['storeId']?.toString() ?? '',
+      montant: (d['montant'] is num) ? d['montant'] as num : 0,
+      methode: d['methode']?.toString() ?? '',
+      recuUrl: d['recuUrl']?.toString() ?? '',
+      statut: d['statut']?.toString() ?? 'en_attente',
+      dateEnvoi:
+          (d['dateEnvoi'] as Timestamp?)?.toDate() ?? DateTime.now(),
+    );
+  }
+
+  Map<String, dynamic> toMap() => {
+        'storeId': storeId,
+        'montant': montant,
+        'methode': methode,
+        'recuUrl': recuUrl,
+        'statut': statut,
+        'dateEnvoi': FieldValue.serverTimestamp(),
       };
 }
