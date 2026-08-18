@@ -140,6 +140,7 @@ class StoreService {
     required File recu,
     required num montant,
     required String methode,
+    String? planId,
   }) async {
     final uid = currentUser?.uid;
     if (uid == null) throw Exception('Non connecté.');
@@ -170,7 +171,7 @@ class StoreService {
         .doc(uid)
         .collection('payment_requests')
         .doc(id)
-        .set(payment.toMap());
+        .set({...payment.toMap(), if (planId != null) 'planId': planId});
 
     // Le magasin passe en "paiement en attente" : il perd l'accès aux
     // demandes dès la fin de son essai/abonnement en cours, jusqu'à
@@ -179,6 +180,19 @@ class StoreService {
         .collection(_storesCollection)
         .doc(uid)
         .update({'subscriptionStatus': SubscriptionStatus.enAttente});
+  }
+
+  /// Profil du magasin connecté, en direct (reflète l'activation
+  /// automatique de l'abonnement dès que le webhook Chargily confirme le
+  /// paiement, sans avoir à recharger l'écran).
+  static Stream<StoreProfile?> myProfileStream() {
+    final uid = currentUser?.uid;
+    if (uid == null) return const Stream.empty();
+    return FirebaseFirestore.instance
+        .collection(_storesCollection)
+        .doc(uid)
+        .snapshots()
+        .map((doc) => doc.exists ? StoreProfile.fromDoc(doc) : null);
   }
 
   /// Historique des demandes de paiement du magasin connecté.

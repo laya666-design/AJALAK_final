@@ -111,6 +111,31 @@ class PartOffer {
       };
 }
 
+/// Un forfait d'abonnement magasin proposé dans le portail vendeur.
+class SubscriptionPlan {
+  final String id;
+  final String nom;
+  final int dureeJours;
+  final int prixDA;
+
+  const SubscriptionPlan({
+    required this.id,
+    required this.nom,
+    required this.dureeJours,
+    required this.prixDA,
+  });
+
+  /// Prix ramené au mois, pour comparer les forfaits entre eux.
+  double get prixParMoisDA => prixDA / (dureeJours / 30);
+}
+
+const List<SubscriptionPlan> kSubscriptionPlans = [
+  SubscriptionPlan(id: 'mensuel', nom: 'Mensuel', dureeJours: 30, prixDA: 2000),
+  SubscriptionPlan(
+      id: 'trimestriel', nom: 'Trimestriel', dureeJours: 90, prixDA: 5000),
+  SubscriptionPlan(id: 'annuel', nom: 'Annuel', dureeJours: 365, prixDA: 18000),
+];
+
 /// Statuts d'abonnement possibles pour un magasin.
 class SubscriptionStatus {
   static const essai = 'essai'; // mois d'essai gratuit
@@ -130,6 +155,7 @@ class StoreProfile {
   final String subscriptionStatus; // voir SubscriptionStatus
   final DateTime? trialEndDate;
   final DateTime? subscriptionEndDate;
+  final String? currentPlanId; // dernier forfait payé (voir kSubscriptionPlans)
 
   StoreProfile({
     required this.uid,
@@ -141,7 +167,11 @@ class StoreProfile {
     this.subscriptionStatus = SubscriptionStatus.essai,
     this.trialEndDate,
     this.subscriptionEndDate,
+    this.currentPlanId,
   });
+
+  /// Identifiant court du magasin à afficher dans l'app (support/admin).
+  String get idCourt => uid.length > 6 ? uid.substring(0, 6).toUpperCase() : uid.toUpperCase();
 
   /// Le magasin a-t-il le droit de voir/répondre aux demandes en ce moment ?
   /// (identité validée ET essai ou abonnement toujours en cours)
@@ -181,6 +211,7 @@ class StoreProfile {
           d['subscriptionStatus']?.toString() ?? SubscriptionStatus.essai,
       trialEndDate: (d['trialEndDate'] as Timestamp?)?.toDate(),
       subscriptionEndDate: (d['subscriptionEndDate'] as Timestamp?)?.toDate(),
+      currentPlanId: d['currentPlanId']?.toString(),
     );
   }
 
@@ -195,6 +226,7 @@ class StoreProfile {
           'trialEndDate': Timestamp.fromDate(trialEndDate!),
         if (subscriptionEndDate != null)
           'subscriptionEndDate': Timestamp.fromDate(subscriptionEndDate!),
+        if (currentPlanId != null) 'currentPlanId': currentPlanId,
       };
 }
 

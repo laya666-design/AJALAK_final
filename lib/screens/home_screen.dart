@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../config/app_config.dart';
 import '../services/vehicule.dart';
-import 'parts_screen.dart';
+import 'parts_portal_screen.dart';
 import 'profile_screen.dart';
 import 'vehicles_screen.dart';
 
@@ -40,7 +40,7 @@ class _HomeScreenState extends State<HomeScreen> {
             labelVide: 'Aucune moto ni scooter pour le moment',
             labelVideAr: 'لا توجد دراجة حتى الآن',
           ),
-          PartsScreen(config: widget.config, isAr: isAr),
+          PartsPortalScreen(config: widget.config, isAr: isAr),
           ProfileScreen(config: widget.config, isAr: widget.isAr),
         ];
 

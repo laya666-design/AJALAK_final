@@ -4,7 +4,9 @@ import 'package:image_picker/image_picker.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../config/app_config.dart';
 import '../services/gemini_service.dart';
+import '../services/marketplace_service.dart';
 import '../services/models.dart';
+import 'marketplace/mes_demandes_screen.dart';
 
 class PartsScreen extends StatefulWidget {
   final AppConfig config;
@@ -21,6 +23,7 @@ class _PartsScreenState extends State<PartsScreen> {
 
   File? _image;
   bool _loading = false;
+  bool _sending = false;
   String? _error;
   CarPartInfo? _part;
 
@@ -81,6 +84,47 @@ class _PartsScreenState extends State<PartsScreen> {
     await launchUrl(uri, mode: LaunchMode.externalApplication);
   }
 
+  /// Diffuse réellement la demande aux magasins via Firestore (Phase 4).
+  /// Sans cet appel, le bouton "Envoyer la demande" n'atteignait aucun
+  /// magasin — c'est corrigé ici.
+  Future<void> _envoyerDemande() async {
+    final img = _image;
+    final part = _part;
+    if (img == null || part == null) return;
+
+    setState(() => _sending = true);
+    try {
+      await MarketplaceService.broadcastRequest(
+        photo: img,
+        pieceNom: part.nom,
+        reference: part.reference,
+        compatibilite: part.compatibilite,
+      );
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(_t('Demande envoyée aux magasins.', 'تم إرسال الطلب إلى المتاجر.')),
+          action: SnackBarAction(
+            label: _t('Voir', 'عرض'),
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => MesDemandesScreen(config: widget.config),
+              ),
+            ),
+          ),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(_t('Erreur : $e', 'خطأ: $e'))),
+      );
+    } finally {
+      if (mounted) setState(() => _sending = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final part = _part;
@@ -90,9 +134,6 @@ class _PartsScreenState extends State<PartsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(_t('Pièces détachées', 'قطع الغيار'),
-                style: Theme.of(context).textTheme.headlineSmall),
-            const SizedBox(height: 4),
             Text(
               _t(
                 'Photographie la pièce cassée pour trouver référence et prix.',
@@ -416,19 +457,20 @@ class _PartsScreenState extends State<PartsScreen> {
               ] else
                 const SizedBox(height: 16),
               ElevatedButton(
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                        content: Text(_t('Demande envoyée aux magasins.',
-                            'تم إرسال الطلب إلى المتاجر.'))),
-                  );
-                },
+                onPressed: _sending ? null : _envoyerDemande,
                 style: ElevatedButton.styleFrom(
                   minimumSize: const Size.fromHeight(50),
                   backgroundColor: Colors.black,
                   foregroundColor: Colors.white,
                 ),
-                child: Text(_t('Envoyer la demande', 'إرسال الطلب')),
+                child: _sending
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                            strokeWidth: 2, color: Colors.white),
+                      )
+                    : Text(_t('Envoyer la demande', 'إرسال الطلب')),
               ),
             ],
           ],
