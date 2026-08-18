@@ -15,6 +15,7 @@ dependencies:
   firebase_auth: ^5.3.3
   firebase_storage: ^12.3.6
   firebase_messaging: ^15.1.5
+  cloud_functions: ^5.1.5
   http: ^1.2.0
   hive: ^2.2.3
   hive_flutter: ^1.1.0

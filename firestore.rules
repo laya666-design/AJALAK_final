@@ -49,7 +49,9 @@ service cloud.firestore {
                       && request.resource.data.trialEndDate
                           == resource.data.trialEndDate
                       && request.resource.data.get('subscriptionEndDate', null)
-                          == resource.data.get('subscriptionEndDate', null);
+                          == resource.data.get('subscriptionEndDate', null)
+                      && request.resource.data.get('currentPlanId', null)
+                          == resource.data.get('currentPlanId', null);
       allow delete: if false;
 
       // Preuves de paiement envoyées par le magasin : il peut créer et
