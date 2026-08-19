@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'cloudinary_service.dart';
 import 'marketplace_models.dart';
 
 /// Marketplace pièces — côté demandeur (client).
@@ -36,9 +36,10 @@ class MarketplaceService {
   }) async {
     final id = FirebaseFirestore.instance.collection(_requestsCollection).doc().id;
 
-    final ref = FirebaseStorage.instance.ref('part_requests/$id.jpg');
-    await ref.putFile(photo);
-    final photoUrl = await ref.getDownloadURL();
+    final photoUrl = await CloudinaryService.uploadImage(
+      photo,
+      folder: 'part_requests',
+    );
 
     final request = PartRequest(
       id: id,

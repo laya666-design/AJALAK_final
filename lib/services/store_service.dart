@@ -2,7 +2,7 @@ import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:firebase_storage/firebase_storage.dart';
+import 'cloudinary_service.dart';
 import 'marketplace_models.dart';
 
 /// Prix de l'abonnement mensuel magasin, en DA.
@@ -152,9 +152,10 @@ class StoreService {
         .doc()
         .id;
 
-    final ref = FirebaseStorage.instance.ref('payment_proofs/$uid/$id.jpg');
-    await ref.putFile(recu);
-    final recuUrl = await ref.getDownloadURL();
+    final recuUrl = await CloudinaryService.uploadImage(
+      recu,
+      folder: 'payment_proofs/$uid',
+    );
 
     final payment = PaymentRequest(
       id: id,
