@@ -93,16 +93,4 @@ jobs:
           name: EL-BOUNI-PIECES-AUTO
           path: build/app/outputs/flutter-apk/app-debug.apk
           retention-days: 14
-      - name: Build APK (debug, garanti vert)
-        run: flutter build apk --debug
-
-      - name: Afficher SHA-256 du keystore debug
-        run: |
-          keytool -list -v -keystore ~/.android/debug.keystore -alias androiddebugkey -storepass android -keypass android
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: EL-BOUNI-PIECES-AUTO
-          path: build/app/outputs/flutter-apk/app-debug.apk
-          retention-days: 14
+          overwrite: true
