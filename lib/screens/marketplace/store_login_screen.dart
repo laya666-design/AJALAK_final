@@ -16,8 +16,19 @@ class StoreLoginScreen extends StatefulWidget {
 class _StoreLoginScreenState extends State<StoreLoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  bool _rememberMe = true;
   bool _loading = false;
   String? _error;
+
+  void _goToDashboard() {
+    if (!mounted) return;
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (_) => StoreDashboardScreen(config: widget.config),
+      ),
+    );
+  }
 
   Future<void> _login() async {
     setState(() {
@@ -28,16 +39,26 @@ class _StoreLoginScreenState extends State<StoreLoginScreen> {
       await StoreService.signIn(
         email: _emailController.text.trim(),
         password: _passwordController.text,
+        rememberMe: _rememberMe,
       );
-      if (!mounted) return;
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (_) => StoreDashboardScreen(config: widget.config),
-        ),
-      );
+      _goToDashboard();
     } on FirebaseAuthException catch (e) {
       setState(() => _error = e.message ?? 'Connexion impossible.');
+    } catch (e) {
+      setState(() => _error = 'Erreur : $e');
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  Future<void> _loginWithGoogle() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      await StoreService.signInWithGoogle(rememberMe: _rememberMe);
+      _goToDashboard();
     } catch (e) {
       setState(() => _error = 'Erreur : $e');
     } finally {
@@ -79,11 +100,20 @@ class _StoreLoginScreenState extends State<StoreLoginScreen> {
                 obscureText: true,
                 decoration: const InputDecoration(labelText: 'Mot de passe'),
               ),
+              const SizedBox(height: 4),
+              CheckboxListTile(
+                value: _rememberMe,
+                onChanged: (v) => setState(() => _rememberMe = v ?? true),
+                title: const Text('Se souvenir de moi'),
+                controlAffinity: ListTileControlAffinity.leading,
+                contentPadding: EdgeInsets.zero,
+                dense: true,
+              ),
               if (_error != null) ...[
-                const SizedBox(height: 12),
+                const SizedBox(height: 8),
                 Text(_error!, style: const TextStyle(color: Colors.red)),
               ],
-              const SizedBox(height: 20),
+              const SizedBox(height: 12),
               FilledButton(
                 onPressed: _loading ? null : _login,
                 style: FilledButton.styleFrom(
@@ -98,6 +128,26 @@ class _StoreLoginScreenState extends State<StoreLoginScreen> {
                             strokeWidth: 2, color: Colors.white),
                       )
                     : const Text('Se connecter'),
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: const [
+                  Expanded(child: Divider()),
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 8),
+                    child: Text('ou', style: TextStyle(color: Colors.black45)),
+                  ),
+                  Expanded(child: Divider()),
+                ],
+              ),
+              const SizedBox(height: 12),
+              OutlinedButton.icon(
+                onPressed: _loading ? null : _loginWithGoogle,
+                icon: const Icon(Icons.g_mobiledata, size: 28),
+                label: const Text('Continuer avec Google'),
+                style: OutlinedButton.styleFrom(
+                  minimumSize: const Size.fromHeight(50),
+                ),
               ),
               const SizedBox(height: 8),
               TextButton(

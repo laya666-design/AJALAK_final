@@ -6,6 +6,7 @@ import 'firebase_options.dart';
 import 'config/app_config.dart';
 import 'screens/home_screen.dart';
 import 'services/notification_service.dart';
+import 'services/store_service.dart';
 import 'services/vehicule_service.dart';
 
 void main() async {
@@ -13,6 +14,10 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
+  // "Se souvenir de moi" côté magasin : déconnecte si l'utilisateur avait
+  // décoché la case lors de sa dernière connexion.
+  await StoreService.applyRememberMePreference();
 
   // Stockage local (Hive) pour la gestion multi-véhicules — Phase 1.
   await VehiculeService.init();

@@ -2,6 +2,8 @@ import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'cloudinary_service.dart';
 import 'marketplace_models.dart';
 
@@ -11,14 +13,16 @@ const int kEssaiGratuitJours = 30;
 
 /// Marketplace pièces — côté magasin ("Espace Pro").
 ///
-/// Compte email/mot de passe (Firebase Auth). Un magasin créé via
-/// [signUp] est enregistré avec `actif: false` : il ne reçoit ni ne voit
-/// aucune demande tant qu'il n'a pas été validé manuellement (passage à
-/// `actif: true` dans la console Firestore). C'est volontaire pour la
-/// Phase 4 — pas de vraie modération automatisée pour l'instant, juste un
-/// verrou pour éviter les faux comptes actifs par défaut.
+/// Compte email/mot de passe (Firebase Auth) ou Google Sign-In. Un magasin
+/// créé via [signUp] ou [signInWithGoogle] (première connexion) est
+/// enregistré avec `actif: false` : il ne reçoit ni ne voit aucune demande
+/// tant qu'il n'a pas été validé manuellement (passage à `actif: true` dans
+/// la console Firestore). C'est volontaire pour la Phase 4 — pas de vraie
+/// modération automatisée pour l'instant, juste un verrou pour éviter les
+/// faux comptes actifs par défaut.
 class StoreService {
   static const _storesCollection = 'stores';
+  static const _rememberMeKey = 'store_remember_me';
 
   static User? get currentUser => FirebaseAuth.instance.currentUser;
   static bool get isLoggedIn => currentUser != null;
@@ -51,14 +55,78 @@ class StoreService {
     await _registerFcmToken(cred.user!.uid);
   }
 
-  static Future<void> signIn(
-      {required String email, required String password}) async {
+  static Future<void> signIn({
+    required String email,
+    required String password,
+    bool rememberMe = true,
+  }) async {
     await FirebaseAuth.instance.signInWithEmailAndPassword(
       email: email,
       password: password,
     );
+    await _saveRememberMe(rememberMe);
     final uid = currentUser?.uid;
     if (uid != null) await _registerFcmToken(uid);
+  }
+
+  /// Connexion (ou inscription automatique si c'est la première fois)
+  /// avec un compte Google. Si le magasin n'existe pas encore dans
+  /// Firestore, un profil minimal est créé avec `actif: false` — comme
+  /// pour [signUp], une validation manuelle reste nécessaire ; le magasin
+  /// peut ensuite compléter téléphone/adresse depuis son tableau de bord.
+  static Future<void> signInWithGoogle({bool rememberMe = true}) async {
+    final googleUser = await GoogleSignIn().signIn();
+    if (googleUser == null) {
+      throw Exception('Connexion Google annulée.');
+    }
+    final googleAuth = await googleUser.authentication;
+    final credential = GoogleAuthProvider.credential(
+      accessToken: googleAuth.accessToken,
+      idToken: googleAuth.idToken,
+    );
+    final userCred =
+        await FirebaseAuth.instance.signInWithCredential(credential);
+    final user = userCred.user;
+    if (user == null) {
+      throw Exception('Connexion Google impossible.');
+    }
+    await _saveRememberMe(rememberMe);
+
+    final docRef =
+        FirebaseFirestore.instance.collection(_storesCollection).doc(user.uid);
+    final doc = await docRef.get();
+    if (!doc.exists) {
+      final profile = StoreProfile(
+        uid: user.uid,
+        nom: user.displayName ?? '',
+        tel: '',
+        adresse: '',
+        actif: false,
+        subscriptionStatus: SubscriptionStatus.essai,
+        trialEndDate:
+            DateTime.now().add(const Duration(days: kEssaiGratuitJours)),
+      );
+      await docRef.set(profile.toMap());
+    }
+    await _registerFcmToken(user.uid);
+  }
+
+  static Future<void> _saveRememberMe(bool rememberMe) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_rememberMeKey, rememberMe);
+  }
+
+  /// À appeler une fois au démarrage de l'app (avant d'afficher le portail
+  /// vendeur) : si le magasin s'était connecté sans cocher "Se souvenir de
+  /// moi", on force la déconnexion pour que la session ne survive pas au
+  /// redémarrage de l'app, même si Firebase Auth garde la session active
+  /// par défaut.
+  static Future<void> applyRememberMePreference() async {
+    final prefs = await SharedPreferences.getInstance();
+    final rememberMe = prefs.getBool(_rememberMeKey) ?? true;
+    if (!rememberMe && currentUser != null) {
+      await FirebaseAuth.instance.signOut();
+    }
   }
 
   static Future<void> signOut() => FirebaseAuth.instance.signOut();
