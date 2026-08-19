@@ -63,10 +63,14 @@ jobs:
           java-version: '17'
           cache: 'gradle'
 
-      - name: Générer le keystore debug si absent
+      - name: Utiliser le keystore debug du dépôt (empreinte SHA fixe)
         run: |
           mkdir -p ~/.android
-          if [ ! -f ~/.android/debug.keystore ]; then
+          if [ -f android/keystore/debug.keystore ]; then
+            cp android/keystore/debug.keystore ~/.android/debug.keystore
+            echo "OK : keystore du dépôt copié — empreinte SHA stable à chaque build"
+          else
+            echo "ATTENTION : android/keystore/debug.keystore introuvable, génération d'un keystore temporaire (empreinte instable)"
             keytool -genkey -v -keystore ~/.android/debug.keystore \
               -storepass android -alias androiddebugkey -keypass android \
               -keyalg RSA -keysize 2048 -validity 10000 \
@@ -76,6 +80,19 @@ jobs:
       - name: Get dependencies
         run: flutter pub get
 
+      - name: Build APK (debug, garanti vert)
+        run: flutter build apk --debug
+
+      - name: Afficher SHA-256 du keystore debug
+        run: |
+          keytool -list -v -keystore ~/.android/debug.keystore -alias androiddebugkey -storepass android -keypass android
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: EL-BOUNI-PIECES-AUTO
+          path: build/app/outputs/flutter-apk/app-debug.apk
+          retention-days: 14
       - name: Build APK (debug, garanti vert)
         run: flutter build apk --debug
 
