@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../config/app_config.dart';
+import '../theme/app_theme.dart';
 
 class _FixedStore {
   final String nom;
@@ -28,57 +29,89 @@ class MapScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return SafeArea(
       child: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(20),
         children: [
           Text('El Bouni - Annaba',
               style: Theme.of(context).textTheme.headlineSmall),
           const SizedBox(height: 4),
-          const Text('Localise les magasins de pièces détachées.',
-              style: TextStyle(color: Colors.black54)),
-          const SizedBox(height: 16),
-          // Placeholder de carte statique (pas de flutter_map -> évite les
-          // instabilités de build listées dans le cahier des charges).
+          Text('Localise les magasins de pièces détachées.',
+              style: Theme.of(context).textTheme.bodyMedium),
+          const SizedBox(height: 20),
+
+          // Vignette au style de marque plutôt qu'un gris neutre générique.
           Container(
-            height: 180,
+            height: 160,
+            width: double.infinity,
             decoration: BoxDecoration(
-              color: Colors.grey.shade200,
-              borderRadius: BorderRadius.circular(12),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  AppColors.primary.withValues(alpha: 0.10),
+                  AppColors.primary.withValues(alpha: 0.02),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: AppColors.border),
             ),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.map, size: 48, color: Colors.grey.shade500),
-                const SizedBox(height: 8),
-                Text('El Bouni, Annaba',
-                    style: TextStyle(color: Colors.grey.shade600)),
+                Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.06),
+                        blurRadius: 10,
+                      ),
+                    ],
+                  ),
+                  child: const Icon(Icons.location_on,
+                      size: 28, color: AppColors.primary),
+                ),
+                const SizedBox(height: 10),
+                const Text(
+                  'El Bouni, Annaba',
+                  style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textPrimary),
+                ),
               ],
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
           ElevatedButton.icon(
             onPressed: () => _openMaps('El Bouni Annaba pièces détachées'),
-            icon: const Icon(Icons.open_in_new),
+            icon: const Icon(Icons.open_in_new, size: 18),
             label: const Text('Ouvrir Google Maps El Bouni'),
-            style: ElevatedButton.styleFrom(
-              minimumSize: const Size.fromHeight(50),
-              backgroundColor: config.primaryColor,
-              foregroundColor: Colors.white,
-            ),
           ),
-          const SizedBox(height: 20),
-          const Text('Magasins',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-          const SizedBox(height: 8),
+          const SizedBox(height: 28),
+          Text('Magasins', style: Theme.of(context).textTheme.titleMedium),
+          const SizedBox(height: 10),
           ..._elBouniStores.map((s) => Card(
+                shape: AppTheme.cardShape,
                 margin: const EdgeInsets.only(bottom: 10),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12)),
                 child: ListTile(
-                  leading: const Icon(Icons.storefront),
-                  title: Text(s.nom),
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                  leading: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(Icons.storefront,
+                        color: AppColors.primary, size: 20),
+                  ),
+                  title: Text(s.nom,
+                      style: const TextStyle(fontWeight: FontWeight.w600)),
                   subtitle: Text(s.adresse),
                   trailing: IconButton(
                     icon: const Icon(Icons.directions),
+                    color: AppColors.primary,
                     onPressed: () => _openMaps('${s.nom} ${s.adresse}'),
                   ),
                 ),
