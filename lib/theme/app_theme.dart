@@ -119,6 +119,19 @@ class AppTheme {
         ),
       ),
 
+      // Ajouté : sans ça, FilledButton (utilisé dans les dialogues —
+      // "Ajouter", "Enregistrer", "Confirmer"...) garde la forme "pilule"
+      // par défaut de Material 3, incohérente avec les autres boutons.
+      filledButtonTheme: FilledButtonThemeData(
+        style: FilledButton.styleFrom(
+          backgroundColor: AppColors.primary,
+          foregroundColor: Colors.white,
+          minimumSize: const Size.fromHeight(52),
+          textStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        ),
+      ),
+
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: AppColors.textPrimary,
