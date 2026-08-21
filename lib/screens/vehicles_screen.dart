@@ -539,4 +539,27 @@ class _VehiclesScreenState extends State<VehiclesScreen> {
                 color: AppColors.background,
                 child: ListTile(
                   contentPadding: const EdgeInsets.all(12),
-                  leading: const Ic
+                  leading: const Icon(Icons.lock_outline,
+                      color: AppColors.textMuted),
+                  title: Text(
+                    _t('Passe en Premium pour en ajouter plus',
+                        'قم بالترقية إلى Premium لإضافة المزيد'),
+                    style: const TextStyle(
+                        fontSize: 14, fontWeight: FontWeight.w600),
+                  ),
+                  subtitle: Text(
+                    _t('Véhicules illimités avec Premium',
+                        'مركبات غير محدودة مع Premium'),
+                    style: const TextStyle(fontSize: 12),
+                  ),
+                  trailing: const Icon(Icons.chevron_right,
+                      color: AppColors.textMuted),
+                  onTap: _showPremiumSheet,
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
