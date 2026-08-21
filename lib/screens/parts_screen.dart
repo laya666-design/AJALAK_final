@@ -480,47 +480,4 @@ class _PartsScreenState extends State<PartsScreen> {
               if (part.conseils.isNotEmpty) ...[
                 const SizedBox(height: 12),
                 Container(
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: AppColors.background,
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: AppColors.border),
-                  ),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Icon(Icons.lightbulb_outline,
-                          color: AppColors.primary, size: 20),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Text(part.conseils,
-                            style: const TextStyle(fontSize: 13, height: 1.4)),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 20),
-              ] else
-                const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: _sending ? null : _envoyerDemande,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.textPrimary,
-                  foregroundColor: Colors.white,
-                ),
-                child: _sending
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                            strokeWidth: 2, color: Colors.white),
-                      )
-                    : Text(_t('Envoyer la demande', 'إرسال الطلب')),
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-}
+         
