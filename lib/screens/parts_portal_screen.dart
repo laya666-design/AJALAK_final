@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../config/app_config.dart';
 import '../services/store_service.dart';
+import '../theme/app_theme.dart';
 import 'buyer_portal_screen.dart';
 import 'marketplace/store_dashboard_screen.dart';
 import 'marketplace/store_login_screen.dart';
@@ -32,7 +33,7 @@ class PartsPortalScreen extends StatelessWidget {
             const SizedBox(height: 4),
             Text(
               _t('Choisis ton profil pour continuer.', 'اختر ملفك للمتابعة.'),
-              style: const TextStyle(color: Colors.black54),
+              style: Theme.of(context).textTheme.bodyMedium,
             ),
             const SizedBox(height: 28),
             _PortalCard(
@@ -43,7 +44,7 @@ class PartsPortalScreen extends StatelessWidget {
                 'diffuse ta demande aux magasins.',
                 'صوّر القطعة المكسورة، احصل على المرجع وأرسل طلبك للمتاجر.',
               ),
-              color: config.primaryColor,
+              color: AppColors.primary,
               onTap: () => Navigator.push(
                 context,
                 MaterialPageRoute(
@@ -51,7 +52,7 @@ class PartsPortalScreen extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 14),
             _PortalCard(
               icon: Icons.storefront_outlined,
               title: _t('Portail vendeur — Espace magasin', 'بوابة البائع'),
@@ -60,7 +61,7 @@ class PartsPortalScreen extends StatelessWidget {
                 'réponds avec ton prix, gère ton abonnement.',
                 'مخصص للمتاجر: استقبل الطلبات، أجب بالسعر، أدر اشتراكك.',
               ),
-              color: Colors.black87,
+              color: AppColors.textPrimary,
               onTap: () => Navigator.push(
                 context,
                 MaterialPageRoute(
@@ -96,29 +97,23 @@ class _PortalCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(18),
       child: Container(
         padding: const EdgeInsets.all(18),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.grey.shade300),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.04),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: AppColors.border),
+          color: AppColors.surface,
         ),
         child: Row(
           children: [
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(12),
+                color: color.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(14),
               ),
-              child: Icon(icon, color: color, size: 30),
+              child: Icon(icon, color: color, size: 28),
             ),
             const SizedBox(width: 14),
             Expanded(
@@ -126,13 +121,19 @@ class _PortalCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(title,
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                      style: const TextStyle(
+                          fontWeight: FontWeight.w700, fontSize: 16)),
                   const SizedBox(height: 4),
-                  Text(subtitle, style: const TextStyle(fontSize: 12, color: Colors.black54)),
+                  Text(subtitle,
+                      style: const TextStyle(
+                          fontSize: 12,
+                          color: AppColors.textSecondary,
+                          height: 1.35)),
                 ],
               ),
             ),
-            const Icon(Icons.chevron_right, color: Colors.black38),
+            const SizedBox(width: 4),
+            const Icon(Icons.chevron_right, color: AppColors.textMuted),
           ],
         ),
       ),
