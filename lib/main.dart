@@ -1,186 +1,70 @@
-import 'theme/app_theme.dart'; // en haut du fichier
 import 'package:flutter/material.dart';
-// import '../services/store_service.dart'; // ton service existant
+import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'firebase_options.dart';
+import 'config/app_config.dart';
+import 'theme/app_theme.dart';
+import 'screens/home_screen.dart';
+import 'services/notification_service.dart';
+import 'services/store_service.dart';
+import 'services/vehicule_service.dart';
 
-// Pour tester l'écran seul, colle tout ce fichier dans main.dart
-void main() {
-  runApp(const MyApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+
+  // "Se souvenir de moi" côté magasin : déconnecte si l'utilisateur avait
+  // décoché la case lors de sa dernière connexion.
+  await StoreService.applyRememberMePreference();
+
+  // Stockage local (Hive) pour la gestion multi-véhicules — Phase 1.
+  await VehiculeService.init();
+  await SettingsService.init();
+
+  // Rappels locaux J-30/J-15/J-7 avant expiration.
+  await NotificationService.init();
+
+  // Bannière publicitaire (AdMob).
+  await MobileAds.instance.initialize();
+
+  runApp(const AjalakApp());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class AjalakApp extends StatefulWidget {
+  const AjalakApp({super.key});
+  @override
+  State<AjalakApp> createState() => _AjalakAppState();
+}
+
+class _AjalakAppState extends State<AjalakApp> {
+  final ValueNotifier<bool> isAr = ValueNotifier(false);
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.light, // dans le MaterialApp existant
-      home: const StoreLoginScreen(),
-    );
-  }
-}
-
-class StoreLoginScreen extends StatefulWidget {
-  const StoreLoginScreen({super.key});
-
-  @override
-  State<StoreLoginScreen> createState() => _StoreLoginScreenState();
-}
-
-class _StoreLoginScreenState extends State<StoreLoginScreen> {
-  final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
-  bool _rememberMe = true;
-  bool _loading = false;
-  String? _error;
-
-  Future<void> _handleLogin() async {
-    setState(() {
-      _loading = true;
-      _error = null;
-    });
-
-    try {
-      // TODO: appelle ici ton service existant, ex:
-      // await StoreService.login(
-      //   email: _emailController.text.trim(),
-      //   password: _passwordController.text,
-      //   rememberMe: _rememberMe,
-      // );
-    } catch (e) {
-      setState(() {
-        _error = 'Connexion impossible. Vérifie tes identifiants.';
-      });
-    } finally {
-      if (mounted) {
-        setState(() {
-          _loading = false;
-        });
-      }
-    }
-  }
-
-  @override
-  void dispose() {
-    _emailController.dispose();
-    _passwordController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Espace Pro — Magasin')),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const SizedBox(height: 16),
-              Center(
-                child: Container(
-                  width: 88,
-                  height: 88,
-                  decoration: BoxDecoration(
-                    color: AppColors.primary.withValues(alpha: 0.08),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.storefront_rounded,
-                    size: 40,
-                    color: AppColors.primary,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 20),
-              Text(
-                'Reçois les demandes de pièces des clients autour de toi et réponds avec ton prix.',
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: AppColors.textSecondary,
-                    ),
-              ),
-              const SizedBox(height: 32),
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    children: [
-                      TextField(
-                        controller: _emailController,
-                        keyboardType: TextInputType.emailAddress,
-                        decoration: const InputDecoration(
-                          labelText: 'Email',
-                          prefixIcon: Icon(Icons.mail_outline),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      TextField(
-                        controller: _passwordController,
-                        obscureText: true,
-                        decoration: const InputDecoration(
-                          labelText: 'Mot de passe',
-                          prefixIcon: Icon(Icons.lock_outline),
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          Checkbox(
-                            value: _rememberMe,
-                            activeColor: AppColors.primary,
-                            onChanged: (v) =>
-                                setState(() => _rememberMe = v ?? true),
-                          ),
-                          const Text('Se souvenir de moi'),
-                        ],
-                      ),
-                      if (_error != null) ...[
-                        const SizedBox(height: 8),
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: AppColors.error.withValues(alpha: 0.08),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(
-                            _error!,
-                            style: const TextStyle(
-                              color: AppColors.error,
-                              fontSize: 13,
-                            ),
-                          ),
-                        ),
-                      ],
-                      const SizedBox(height: 20),
-                      SizedBox(
-                        width: double.infinity,
-                        height: 48,
-                        child: ElevatedButton(
-                          onPressed: _loading ? null : _handleLogin,
-                          child: _loading
-                              ? const SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: Colors.white,
-                                  ),
-                                )
-                              : const Text('Se connecter'),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-            ],
-          ),
-        ),
-      ),
+    final config = AppConfig.current();
+    return ValueListenableBuilder<bool>(
+      valueListenable: isAr,
+      builder: (context, arActive, _) {
+        return MaterialApp(
+          title: config.appName,
+          debugShowCheckedModeBanner: false,
+          // Bug corrigé : la locale n'était jamais transmise au MaterialApp,
+          // donc seuls les libellés traduits à la main changeaient, pas les
+          // widgets système (dates, etc.) ni la direction par défaut.
+          locale: arActive ? const Locale('ar') : const Locale('fr'),
+          localizationsDelegates: const [
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: const [Locale('fr'), Locale('ar')],
+          theme: AppTheme.light,
+          home: HomeScreen(config: config, isAr: isAr),
+        );
+      },
     );
   }
 }
