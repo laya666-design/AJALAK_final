@@ -48,16 +48,13 @@ class _HomeScreenState extends State<HomeScreen> {
           textDirection: isAr ? TextDirection.rtl : TextDirection.ltr,
           child: Scaffold(
             appBar: AppBar(
-              backgroundColor: widget.config.primaryColor,
-              foregroundColor: Colors.white,
               title: Text(widget.config.appName),
               actions: [
-                TextButton(
-                  onPressed: () => widget.isAr.value = !isAr,
-                  child: Text(
-                    isAr ? 'FR' : 'AR',
-                    style: const TextStyle(
-                        color: Colors.white, fontWeight: FontWeight.bold),
+                Padding(
+                  padding: const EdgeInsets.only(right: 12),
+                  child: _LangToggle(
+                    isAr: isAr,
+                    onTap: () => widget.isAr.value = !isAr,
                   ),
                 ),
               ],
@@ -88,6 +85,49 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         );
       },
+    );
+  }
+}
+
+/// Interrupteur FR/AR en forme de pilule dans l'AppBar — remplace le
+/// simple texte cliquable par un composant avec un vrai état actif/inactif.
+class _LangToggle extends StatelessWidget {
+  final bool isAr;
+  final VoidCallback onTap;
+  const _LangToggle({required this.isAr, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.18),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _label('FR', !isAr),
+            Text('  /  ',
+                style: TextStyle(color: Colors.white.withValues(alpha: 0.5))),
+            _label('AR', isAr),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _label(String text, bool active) {
+    return Text(
+      text,
+      style: TextStyle(
+        color: active ? Colors.white : Colors.white.withValues(alpha: 0.55),
+        fontWeight: active ? FontWeight.w800 : FontWeight.w500,
+        fontSize: 13,
+      ),
     );
   }
 }
