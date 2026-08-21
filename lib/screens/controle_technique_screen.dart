@@ -8,6 +8,7 @@ import '../services/notification_service.dart';
 import '../services/ocr_service.dart';
 import '../services/vehicule.dart';
 import '../services/vehicule_service.dart';
+import '../theme/app_theme.dart';
 import '../widgets/status_card.dart';
 
 class ControleTechniqueScreen extends StatefulWidget {
@@ -127,8 +128,8 @@ class _ControleTechniqueScreenState extends State<ControleTechniqueScreen> {
           SizedBox(
             width: 90,
             child: Text(label,
-                style:
-                    const TextStyle(fontSize: 13, color: Colors.black54)),
+                style: const TextStyle(
+                    fontSize: 13, color: AppColors.textSecondary)),
           ),
           Expanded(
             child: Text(value,
@@ -158,9 +159,9 @@ class _ControleTechniqueScreenState extends State<ControleTechniqueScreen> {
             const Text(
               'Photographie l\'attestation de contrôle technique pour '
               'calculer les jours restants avant le prochain passage.',
-              style: TextStyle(color: Colors.black54),
+              style: TextStyle(color: AppColors.textSecondary),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 20),
             Row(
               children: [
                 Expanded(
@@ -169,11 +170,6 @@ class _ControleTechniqueScreenState extends State<ControleTechniqueScreen> {
                         _loading ? null : () => _pickImage(ImageSource.camera),
                     icon: const Icon(Icons.camera_alt),
                     label: const Text('Caméra'),
-                    style: ElevatedButton.styleFrom(
-                      minimumSize: const Size.fromHeight(50),
-                      backgroundColor: widget.config.primaryColor,
-                      foregroundColor: Colors.white,
-                    ),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -183,20 +179,18 @@ class _ControleTechniqueScreenState extends State<ControleTechniqueScreen> {
                         _loading ? null : () => _pickImage(ImageSource.gallery),
                     icon: const Icon(Icons.photo_library),
                     label: const Text('Galerie'),
-                    style: OutlinedButton.styleFrom(
-                      minimumSize: const Size.fromHeight(50),
-                    ),
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 20),
             if (_image != null)
-              ClipRRect(
-                borderRadius: BorderRadius.circular(12),
+              Card(
+                margin: EdgeInsets.zero,
+                clipBehavior: Clip.antiAlias,
                 child: Image.file(_image!, height: 180, fit: BoxFit.cover),
               ),
-            const SizedBox(height: 16),
+            if (_image != null) const SizedBox(height: 16),
             if (_loading)
               const Padding(
                 padding: EdgeInsets.symmetric(vertical: 24),
@@ -204,13 +198,24 @@ class _ControleTechniqueScreenState extends State<ControleTechniqueScreen> {
               ),
             if (_error != null)
               Container(
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFEE2E2),
-                  borderRadius: BorderRadius.circular(8),
+                  color: AppColors.errorLight,
+                  borderRadius: BorderRadius.circular(16),
                 ),
-                child: Text(_error!,
-                    style: const TextStyle(color: Color(0xFF991B1B))),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Icon(Icons.error_outline,
+                        color: AppColors.errorText, size: 20),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(_error!,
+                          style: const TextStyle(
+                              color: AppColors.errorText, height: 1.3)),
+                    ),
+                  ],
+                ),
               ),
             if (_status != null) ...[
               StatusCard(status: _status!),
@@ -220,24 +225,36 @@ class _ControleTechniqueScreenState extends State<ControleTechniqueScreen> {
                 (_info!.centre.isNotEmpty ||
                     _info!.numero.isNotEmpty ||
                     _info!.kilometrage.isNotEmpty))
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade100,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text('Détails',
-                        style: TextStyle(
-                            fontWeight: FontWeight.bold, fontSize: 15)),
-                    const SizedBox(height: 8),
-                    _infoRow('Centre', _info!.centre),
-                    _infoRow('Numéro', _info!.numero),
-                    _infoRow('Kilométrage', _info!.kilometrage),
-                  ],
+              Card(
+                margin: EdgeInsets.zero,
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: BoxDecoration(
+                              color: AppColors.primaryLight,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Icon(Icons.info_outline,
+                                size: 16, color: AppColors.primary),
+                          ),
+                          const SizedBox(width: 8),
+                          const Text('Détails',
+                              style: TextStyle(
+                                  fontWeight: FontWeight.w700, fontSize: 15)),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      _infoRow('Centre', _info!.centre),
+                      _infoRow('Numéro', _info!.numero),
+                      _infoRow('Kilométrage', _info!.kilometrage),
+                    ],
+                  ),
                 ),
               ),
           ],
