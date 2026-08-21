@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../../config/app_config.dart';
 import '../../services/store_service.dart';
+import '../../theme/app_theme.dart';
 import 'store_dashboard_screen.dart';
 import 'store_signup_screen.dart';
 
@@ -70,8 +71,6 @@ class _StoreLoginScreenState extends State<StoreLoginScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: widget.config.primaryColor,
-        foregroundColor: Colors.white,
         title: const Text('Espace Pro — Magasin'),
       ),
       body: SafeArea(
@@ -80,13 +79,23 @@ class _StoreLoginScreenState extends State<StoreLoginScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Icon(Icons.storefront, size: 56),
+              Container(
+                alignment: Alignment.center,
+                padding: const EdgeInsets.all(18),
+                margin: const EdgeInsets.only(bottom: 8),
+                decoration: const BoxDecoration(
+                  color: AppColors.primaryLight,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.storefront,
+                    size: 40, color: AppColors.primary),
+              ),
               const SizedBox(height: 8),
               const Text(
                 'Reçois les demandes de pièces des clients autour de toi '
                 'et réponds avec ton prix.',
                 textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.black54),
+                style: TextStyle(color: AppColors.textSecondary),
               ),
               const SizedBox(height: 24),
               TextField(
@@ -111,15 +120,11 @@ class _StoreLoginScreenState extends State<StoreLoginScreen> {
               ),
               if (_error != null) ...[
                 const SizedBox(height: 8),
-                Text(_error!, style: const TextStyle(color: Colors.red)),
+                Text(_error!, style: const TextStyle(color: AppColors.error)),
               ],
               const SizedBox(height: 12),
               FilledButton(
                 onPressed: _loading ? null : _login,
-                style: FilledButton.styleFrom(
-                  minimumSize: const Size.fromHeight(50),
-                  backgroundColor: widget.config.primaryColor,
-                ),
                 child: _loading
                     ? const SizedBox(
                         width: 20,
@@ -130,12 +135,13 @@ class _StoreLoginScreenState extends State<StoreLoginScreen> {
                     : const Text('Se connecter'),
               ),
               const SizedBox(height: 12),
-              Row(
-                children: const [
+              const Row(
+                children: [
                   Expanded(child: Divider()),
                   Padding(
                     padding: EdgeInsets.symmetric(horizontal: 8),
-                    child: Text('ou', style: TextStyle(color: Colors.black45)),
+                    child: Text('ou',
+                        style: TextStyle(color: AppColors.textMuted)),
                   ),
                   Expanded(child: Divider()),
                 ],
@@ -145,9 +151,6 @@ class _StoreLoginScreenState extends State<StoreLoginScreen> {
                 onPressed: _loading ? null : _loginWithGoogle,
                 icon: const Icon(Icons.g_mobiledata, size: 28),
                 label: const Text('Continuer avec Google'),
-                style: OutlinedButton.styleFrom(
-                  minimumSize: const Size.fromHeight(50),
-                ),
               ),
               const SizedBox(height: 8),
               TextButton(
