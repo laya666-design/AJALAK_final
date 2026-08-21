@@ -7,23 +7,25 @@ import 'package:flutter/material.dart';
 class AppColors {
   AppColors._();
 
-  // Marque — identique à AppConfig, ne pas changer sans mettre à jour
-  // aussi l'icône de l'app / le splash screen.
-  static const primary = Color(0xFFDC2626);
-  static const primaryDark = Color(0xFFA31515);
+  // Marque — bleu/indigo moderne (confiance, tech). Ne pas changer sans
+  // mettre à jour aussi l'icône de l'app / le splash screen.
+  static const primary = Color(0xFF4F46E5);
+  static const primaryDark = Color(0xFF3730A3);
+  static const primaryLight = Color(0xFFEEF2FF);
 
   // Neutres
-  static const background = Color(0xFFF7F7F9);
+  static const background = Color(0xFFF6F7FB);
   static const surface = Colors.white;
-  static const border = Color(0xFFE9E9EC);
+  static const border = Color(0xFFE7E8F0);
 
   // Texte
-  static const textPrimary = Color(0xFF19191F);
-  static const textSecondary = Color(0xFF6E6E76);
-  static const textMuted = Color(0xFFA0A0A8);
+  static const textPrimary = Color(0xFF191A23);
+  static const textSecondary = Color(0xFF6B6D7C);
+  static const textMuted = Color(0xFFA0A2B0);
 
-  // États — mêmes teintes que celles déjà utilisées (statuts véhicules,
-  // messages d'erreur), maintenant centralisées ici.
+  // États — indépendants de la couleur de marque : ne pas les faire
+  // dériver de primary (assurance/CT expirés doivent rester rouges
+  // même si la marque devient bleue).
   static const success = Color(0xFF166534);
   static const successLight = Color(0xFFDCFCE7);
   static const warning = Color(0xFF92400E);
@@ -36,11 +38,10 @@ class AppColors {
 class AppTheme {
   AppTheme._();
 
-  /// Forme standard des Card : coins bien arrondis + fine bordure plutôt
-  /// qu'une ombre. À passer en `shape:` sur chaque Card.
+  /// Forme standard des Card : coins arrondis, sans bordure — l'ombre
+  /// (portée par CardThemeData) fait le relief à la place.
   static ShapeBorder get cardShape => RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(18),
-        side: const BorderSide(color: AppColors.border),
+        borderRadius: BorderRadius.circular(20),
       );
 
   static ThemeData get light {
@@ -73,6 +74,18 @@ class AppTheme {
           fontSize: 19,
           fontWeight: FontWeight.w700,
           letterSpacing: -0.2,
+        ),
+      ),
+
+      // Nouveau : cartes Material 3 avec ombre douce plutôt que bordure.
+      cardTheme: CardThemeData(
+        color: AppColors.surface,
+        elevation: 3,
+        shadowColor: AppColors.primary.withValues(alpha: 0.12),
+        surfaceTintColor: Colors.transparent,
+        margin: EdgeInsets.zero,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
         ),
       ),
 
@@ -170,7 +183,7 @@ class AppTheme {
       ),
 
       chipTheme: base.chipTheme.copyWith(
-        backgroundColor: AppColors.background,
+        backgroundColor: AppColors.primaryLight,
         labelStyle: const TextStyle(fontSize: 12, color: AppColors.textPrimary),
         side: BorderSide.none,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
