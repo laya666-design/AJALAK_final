@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/ocr_service.dart';
+import '../theme/app_theme.dart';
 
 class StatusCard extends StatelessWidget {
   final ExpiryStatus status;
@@ -9,33 +10,33 @@ class StatusCard extends StatelessWidget {
   Color get _bgColor {
     switch (status.level) {
       case StatusLevel.ok:
-        return const Color(0xFFDCFCE7); // vert clair
+        return AppColors.successLight;
       case StatusLevel.warning:
-        return const Color(0xFFFEF3C7); // orange clair
+        return AppColors.warningLight;
       case StatusLevel.expired:
-        return const Color(0xFFFEE2E2); // rouge clair
+        return AppColors.errorLight;
     }
   }
 
   Color get _fgColor {
     switch (status.level) {
       case StatusLevel.ok:
-        return const Color(0xFF166534);
+        return AppColors.success;
       case StatusLevel.warning:
-        return const Color(0xFF92400E);
+        return AppColors.warning;
       case StatusLevel.expired:
-        return const Color(0xFF991B1B);
+        return AppColors.errorText;
     }
   }
 
   IconData get _icon {
     switch (status.level) {
       case StatusLevel.ok:
-        return Icons.check_circle;
+        return Icons.check_circle_rounded;
       case StatusLevel.warning:
         return Icons.warning_amber_rounded;
       case StatusLevel.expired:
-        return Icons.error;
+        return Icons.error_rounded;
     }
   }
 
@@ -49,33 +50,40 @@ class StatusCard extends StatelessWidget {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: _bgColor,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: _fgColor.withOpacity(0.3)),
+        borderRadius: BorderRadius.circular(20),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(_icon, color: _fgColor, size: 28),
-              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.55),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(_icon, color: _fgColor, size: 22),
+              ),
+              const SizedBox(width: 10),
               Text(
                 'Expiration : ${_fmt(status.expirationDate)}',
                 style: TextStyle(
                   color: _fgColor,
-                  fontSize: 14,
+                  fontSize: 13.5,
                   fontWeight: FontWeight.w600,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
           Text(
             status.label,
             style: TextStyle(
               color: _fgColor,
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
+              fontSize: 26,
+              fontWeight: FontWeight.w800,
+              letterSpacing: -0.4,
             ),
           ),
         ],
