@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../config/app_config.dart';
 import '../../services/marketplace_models.dart';
 import '../../services/store_service.dart';
+import '../../theme/app_theme.dart';
 import 'store_login_screen.dart';
 import 'subscription_screen.dart';
 
@@ -31,6 +32,8 @@ class _StoreDashboardScreenState extends State<StoreDashboardScreen> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
+        shape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Text('Répondre — ${r.pieceNom}'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -111,8 +114,6 @@ class _StoreDashboardScreenState extends State<StoreDashboardScreen> {
 
         return Scaffold(
           appBar: AppBar(
-            backgroundColor: widget.config.primaryColor,
-            foregroundColor: Colors.white,
             title: Text(profile?.nom.isNotEmpty == true ? profile!.nom : 'Espace Pro'),
             actions: [
               if (profile != null && profile.actif)
@@ -139,6 +140,7 @@ class _StoreDashboardScreenState extends State<StoreDashboardScreen> {
                           'Ton compte est en attente de validation.\n'
                           'Tu recevras les demandes une fois activé.',
                           textAlign: TextAlign.center,
+                          style: TextStyle(color: AppColors.textSecondary),
                         ),
                       ),
                     )
@@ -149,7 +151,15 @@ class _StoreDashboardScreenState extends State<StoreDashboardScreen> {
                             child: Column(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Icon(Icons.lock_clock, size: 48, color: widget.config.primaryColor),
+                                Container(
+                                  padding: const EdgeInsets.all(16),
+                                  decoration: const BoxDecoration(
+                                    color: AppColors.primaryLight,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(Icons.lock_clock,
+                                      size: 32, color: AppColors.primary),
+                                ),
                                 const SizedBox(height: 16),
                                 Text(
                                   profile.subscriptionStatus == SubscriptionStatus.enAttente
@@ -157,11 +167,11 @@ class _StoreDashboardScreenState extends State<StoreDashboardScreen> {
                                       : 'Ton essai gratuit ou ton abonnement est terminé.\n'
                                           'Choisis un forfait pour continuer à recevoir des commandes.',
                                   textAlign: TextAlign.center,
+                                  style: const TextStyle(color: AppColors.textSecondary),
                                 ),
                                 const SizedBox(height: 20),
                                 if (profile.subscriptionStatus != SubscriptionStatus.enAttente)
                                   FilledButton(
-                                    style: FilledButton.styleFrom(backgroundColor: widget.config.primaryColor),
                                     onPressed: () => Navigator.push(
                                       context,
                                       MaterialPageRoute(
@@ -186,11 +196,12 @@ class _StoreDashboardScreenState extends State<StoreDashboardScreen> {
                                   Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                                     decoration: BoxDecoration(
-                                      color: Colors.grey.shade100,
+                                      color: AppColors.primaryLight,
                                       borderRadius: BorderRadius.circular(20),
                                     ),
                                     child: Text('ID ${profile.idCourt}',
-                                        style: const TextStyle(fontSize: 11, color: Colors.black54)),
+                                        style: const TextStyle(
+                                            fontSize: 11, color: AppColors.primary)),
                                   ),
                                 ],
                               ),
@@ -204,7 +215,9 @@ class _StoreDashboardScreenState extends State<StoreDashboardScreen> {
                                   }
                                   final requests = snapshot.data ?? [];
                                   if (requests.isEmpty) {
-                                    return const Center(child: Text('Aucune commande pour le moment.'));
+                                    return const Center(
+                                        child: Text('Aucune commande pour le moment.',
+                                            style: TextStyle(color: AppColors.textSecondary)));
                                   }
                                   return ListView.builder(
                                     padding: const EdgeInsets.all(12),
@@ -217,17 +230,27 @@ class _StoreDashboardScreenState extends State<StoreDashboardScreen> {
                                           onTap: () => _voirPhoto(r.photoUrl),
                                           leading: r.photoUrl.isNotEmpty
                                               ? ClipRRect(
-                                                  borderRadius: BorderRadius.circular(6),
+                                                  borderRadius: BorderRadius.circular(10),
                                                   child: Image.network(r.photoUrl,
                                                       width: 48, height: 48, fit: BoxFit.cover),
                                                 )
-                                              : const Icon(Icons.build),
+                                              : Container(
+                                                  width: 48,
+                                                  height: 48,
+                                                  decoration: BoxDecoration(
+                                                    color: AppColors.primaryLight,
+                                                    borderRadius: BorderRadius.circular(10),
+                                                  ),
+                                                  child: const Icon(Icons.build,
+                                                      color: AppColors.primary),
+                                                ),
                                           title: Text(r.pieceNom.isEmpty ? 'Pièce non nommée' : r.pieceNom),
                                           subtitle: Text(
                                             r.reference.isNotEmpty
                                                 ? 'Réf: ${r.reference}'
                                                 : (r.compatibilite.isNotEmpty ? r.compatibilite.join(', ') : ''),
-                                            style: const TextStyle(fontSize: 12),
+                                            style: const TextStyle(
+                                                fontSize: 12, color: AppColors.textSecondary),
                                           ),
                                           trailing: FilledButton(
                                             onPressed: () => _repondre(r),
