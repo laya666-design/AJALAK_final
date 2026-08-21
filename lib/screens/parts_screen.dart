@@ -6,6 +6,7 @@ import '../config/app_config.dart';
 import '../services/gemini_service.dart';
 import '../services/marketplace_service.dart';
 import '../services/models.dart';
+import '../theme/app_theme.dart';
 import 'marketplace/mes_demandes_screen.dart';
 
 class PartsScreen extends StatefulWidget {
@@ -130,7 +131,7 @@ class _PartsScreenState extends State<PartsScreen> {
     final part = _part;
     return SafeArea(
       child: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -139,7 +140,7 @@ class _PartsScreenState extends State<PartsScreen> {
                 'Photographie la pièce cassée pour trouver référence et prix.',
                 'صوّر القطعة المكسورة لمعرفة المرجع والسعر.',
               ),
-              style: const TextStyle(color: Colors.black54),
+              style: Theme.of(context).textTheme.bodyMedium,
             ),
             const SizedBox(height: 16),
             Row(
@@ -150,11 +151,6 @@ class _PartsScreenState extends State<PartsScreen> {
                         _loading ? null : () => _pickImage(ImageSource.camera),
                     icon: const Icon(Icons.camera_alt),
                     label: Text(_t('Caméra Pièce', 'الكاميرا')),
-                    style: ElevatedButton.styleFrom(
-                      minimumSize: const Size.fromHeight(50),
-                      backgroundColor: widget.config.primaryColor,
-                      foregroundColor: Colors.white,
-                    ),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -164,34 +160,49 @@ class _PartsScreenState extends State<PartsScreen> {
                         _loading ? null : () => _pickImage(ImageSource.gallery),
                     icon: const Icon(Icons.photo_library),
                     label: Text(_t('Galerie', 'المعرض')),
-                    style: OutlinedButton.styleFrom(
-                      minimumSize: const Size.fromHeight(50),
-                    ),
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 20),
             if (_image != null)
-              ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: Image.file(_image!, height: 180, fit: BoxFit.cover),
+              Container(
+                height: 190,
+                width: double.infinity,
+                clipBehavior: Clip.antiAlias,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: AppColors.border),
+                ),
+                child: Image.file(_image!, fit: BoxFit.cover),
               ),
             const SizedBox(height: 16),
             if (_loading)
               const Padding(
-                padding: EdgeInsets.symmetric(vertical: 24),
-                child: Center(child: CircularProgressIndicator()),
+                padding: EdgeInsets.symmetric(vertical: 28),
+                child: Center(
+                  child: CircularProgressIndicator(color: AppColors.primary),
+                ),
               ),
             if (_error != null)
               Container(
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFEE2E2),
-                  borderRadius: BorderRadius.circular(8),
+                  color: AppColors.errorLight,
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                child: Text(_error!,
-                    style: const TextStyle(color: Color(0xFF991B1B))),
+                child: Row(
+                  children: [
+                    const Icon(Icons.error_outline,
+                        color: AppColors.errorText, size: 20),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(_error!,
+                          style: const TextStyle(
+                              color: AppColors.errorText, fontSize: 13)),
+                    ),
+                  ],
+                ),
               ),
             if (part != null) ...[
               Row(
@@ -202,22 +213,22 @@ class _PartsScreenState extends State<PartsScreen> {
                           ? _t('Pièce non identifiée', 'قطعة غير محددة')
                           : part.nom,
                       style: const TextStyle(
-                          fontSize: 18, fontWeight: FontWeight.bold),
+                          fontSize: 19, fontWeight: FontWeight.w800),
                     ),
                   ),
                   if (part.etat.isNotEmpty)
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 4),
+                          horizontal: 10, vertical: 5),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFDCFCE7),
+                        color: AppColors.successLight,
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text(
                         part.etat,
                         style: const TextStyle(
-                            color: Color(0xFF166534),
-                            fontWeight: FontWeight.w600,
+                            color: AppColors.success,
+                            fontWeight: FontWeight.w700,
                             fontSize: 12),
                       ),
                     ),
@@ -230,21 +241,21 @@ class _PartsScreenState extends State<PartsScreen> {
                   style: const TextStyle(
                       fontFamily: 'monospace',
                       fontSize: 14,
-                      color: Colors.black54),
+                      color: AppColors.textSecondary),
                 ),
               ],
               if (part.compatibilite.isNotEmpty) ...[
-                const SizedBox(height: 12),
+                const SizedBox(height: 14),
                 Text(_t('Compatibilité', 'التوافق'),
-                    style: const TextStyle(fontWeight: FontWeight.w600)),
-                const SizedBox(height: 4),
+                    style: const TextStyle(fontWeight: FontWeight.w700)),
+                const SizedBox(height: 6),
                 ...part.compatibilite.map(
                   (c) => Padding(
                     padding: const EdgeInsets.symmetric(vertical: 2),
                     child: Row(
                       children: [
                         const Icon(Icons.check_circle,
-                            color: Colors.green, size: 18),
+                            color: AppColors.success, size: 18),
                         const SizedBox(width: 6),
                         Expanded(child: Text(c)),
                       ],
@@ -257,8 +268,9 @@ class _PartsScreenState extends State<PartsScreen> {
                 width: double.infinity,
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade100,
-                  borderRadius: BorderRadius.circular(12),
+                  color: AppColors.background,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: AppColors.border),
                 ),
                 child: Row(
                   children: [
@@ -268,13 +280,14 @@ class _PartsScreenState extends State<PartsScreen> {
                         children: [
                           Text(_t('Prix El Bouni', 'سعر البوني'),
                               style: const TextStyle(
-                                  fontSize: 12, color: Colors.black54)),
+                                  fontSize: 12,
+                                  color: AppColors.textSecondary)),
                           Text(
                             '${part.prixDa} DA',
                             style: const TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFF166534)),
+                                fontSize: 22,
+                                fontWeight: FontWeight.w800,
+                                color: AppColors.success),
                           ),
                         ],
                       ),
@@ -287,7 +300,7 @@ class _PartsScreenState extends State<PartsScreen> {
                             '${part.prixOrigine} DA',
                             style: const TextStyle(
                               fontSize: 14,
-                              color: Colors.black45,
+                              color: AppColors.textMuted,
                               decoration: TextDecoration.lineThrough,
                             ),
                           ),
@@ -297,7 +310,9 @@ class _PartsScreenState extends State<PartsScreen> {
                               'توفير: ${part.prixOrigine - part.prixDa} DA',
                             ),
                             style: const TextStyle(
-                                fontSize: 12, color: Color(0xFF166534)),
+                                fontSize: 12,
+                                color: AppColors.success,
+                                fontWeight: FontWeight.w600),
                           ),
                         ],
                       ),
@@ -305,81 +320,92 @@ class _PartsScreenState extends State<PartsScreen> {
                   ],
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 20),
               // Fiche de contact des magasins qui ont répondu à la demande :
               // apparaît uniquement une fois qu'un magasin a effectivement
               // répondu (part.magasins n'est jamais rempli automatiquement
-              // par l'IA — voir note dans gemini_service.dart). Nom,
-              // adresse, téléphone et itinéraire sont affichés en une carte
-              // pour éviter de dépendre de l'onglet Carte.
+              // par l'IA — voir note dans gemini_service.dart).
               if (part.magasins.isNotEmpty) ...[
                 Text(_t('Magasins qui ont répondu', 'المتاجر التي ردت'),
                     style: const TextStyle(
-                        fontWeight: FontWeight.bold, fontSize: 15)),
-                const SizedBox(height: 8),
+                        fontWeight: FontWeight.w700, fontSize: 15)),
+                const SizedBox(height: 10),
                 ...part.magasins.map((m) => Container(
                       margin: const EdgeInsets.only(bottom: 10),
-                      padding: const EdgeInsets.all(12),
+                      padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
-                        border: Border.all(color: Colors.grey.shade300),
-                        borderRadius: BorderRadius.circular(10),
+                        color: AppColors.surface,
+                        border: Border.all(color: AppColors.border),
+                        borderRadius: BorderRadius.circular(16),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Row(
                             children: [
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: AppColors.primary
+                                      .withValues(alpha: 0.08),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: const Icon(Icons.storefront,
+                                    color: AppColors.primary, size: 18),
+                              ),
+                              const SizedBox(width: 10),
                               Expanded(
                                 child: Text(m.nom,
                                     style: const TextStyle(
-                                        fontWeight: FontWeight.w600,
+                                        fontWeight: FontWeight.w700,
                                         fontSize: 15)),
                               ),
                               Text('${m.prix} DA',
                                   style: const TextStyle(
-                                      fontWeight: FontWeight.bold)),
+                                      fontWeight: FontWeight.w800)),
                             ],
                           ),
                           if (m.adresse.isNotEmpty)
                             Padding(
-                              padding: const EdgeInsets.only(top: 4),
+                              padding: const EdgeInsets.only(top: 8),
                               child: Row(
                                 children: [
-                                  Icon(Icons.location_on_outlined,
-                                      size: 15, color: Colors.grey.shade600),
+                                  const Icon(Icons.location_on_outlined,
+                                      size: 15, color: AppColors.textMuted),
                                   const SizedBox(width: 4),
                                   Expanded(
                                     child: Text(m.adresse,
                                         style: const TextStyle(
                                             fontSize: 12,
-                                            color: Colors.black54)),
+                                            color: AppColors.textSecondary)),
                                   ),
                                 ],
                               ),
                             ),
                           if (m.tel.isNotEmpty)
                             Padding(
-                              padding: const EdgeInsets.only(top: 2),
+                              padding: const EdgeInsets.only(top: 4),
                               child: Row(
                                 children: [
-                                  Icon(Icons.phone_outlined,
-                                      size: 15, color: Colors.grey.shade600),
+                                  const Icon(Icons.phone_outlined,
+                                      size: 15, color: AppColors.textMuted),
                                   const SizedBox(width: 4),
                                   Text(m.tel,
                                       style: const TextStyle(
                                           fontSize: 12,
-                                          color: Colors.black54)),
+                                          color: AppColors.textSecondary)),
                                 ],
                               ),
                             ),
                           if (m.stock.isNotEmpty)
                             Padding(
-                              padding: const EdgeInsets.only(top: 2),
+                              padding: const EdgeInsets.only(top: 4),
                               child: Text(m.stock,
                                   style: const TextStyle(
-                                      fontSize: 12, color: Colors.black54)),
+                                      fontSize: 12,
+                                      color: AppColors.textSecondary)),
                             ),
-                          const SizedBox(height: 8),
+                          const SizedBox(height: 10),
                           Row(
                             children: [
                               if (m.tel.isNotEmpty) ...[
@@ -388,6 +414,9 @@ class _PartsScreenState extends State<PartsScreen> {
                                     onPressed: () => _call(m.tel),
                                     icon: const Icon(Icons.call, size: 16),
                                     label: Text(_t('Appeler', 'اتصال')),
+                                    style: OutlinedButton.styleFrom(
+                                        minimumSize:
+                                            const Size.fromHeight(40)),
                                   ),
                                 ),
                                 const SizedBox(width: 6),
@@ -396,6 +425,9 @@ class _PartsScreenState extends State<PartsScreen> {
                                     onPressed: () => _whatsapp(m.tel),
                                     icon: const Icon(Icons.message, size: 16),
                                     label: const Text('WhatsApp'),
+                                    style: OutlinedButton.styleFrom(
+                                        minimumSize:
+                                            const Size.fromHeight(40)),
                                   ),
                                 ),
                                 const SizedBox(width: 6),
@@ -406,6 +438,8 @@ class _PartsScreenState extends State<PartsScreen> {
                                       _itineraire(m.nom, m.adresse),
                                   icon: const Icon(Icons.directions, size: 16),
                                   label: Text(_t('Itinéraire', 'الاتجاهات')),
+                                  style: OutlinedButton.styleFrom(
+                                      minimumSize: const Size.fromHeight(40)),
                                 ),
                               ),
                             ],
@@ -415,16 +449,17 @@ class _PartsScreenState extends State<PartsScreen> {
                     )),
               ] else ...[
                 Container(
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    color: Colors.grey.shade100,
-                    borderRadius: BorderRadius.circular(8),
+                    color: AppColors.background,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppColors.border),
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.hourglass_empty,
-                          size: 18, color: Colors.grey.shade600),
-                      const SizedBox(width: 8),
+                      const Icon(Icons.hourglass_empty,
+                          size: 18, color: AppColors.textMuted),
+                      const SizedBox(width: 10),
                       Expanded(
                         child: Text(
                           _t(
@@ -435,7 +470,7 @@ class _PartsScreenState extends State<PartsScreen> {
                             '(الاسم، العنوان، الهاتف) فور رد أحد المتاجر.',
                           ),
                           style: const TextStyle(
-                              fontSize: 12, color: Colors.black54),
+                              fontSize: 12, color: AppColors.textSecondary),
                         ),
                       ),
                     ],
@@ -445,22 +480,32 @@ class _PartsScreenState extends State<PartsScreen> {
               if (part.conseils.isNotEmpty) ...[
                 const SizedBox(height: 12),
                 Container(
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFEFF6FF),
-                    borderRadius: BorderRadius.circular(8),
+                    color: AppColors.background,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: AppColors.border),
                   ),
-                  child: Text('💡 ${part.conseils}',
-                      style: const TextStyle(fontSize: 13)),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Icon(Icons.lightbulb_outline,
+                          color: AppColors.primary, size: 20),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(part.conseils,
+                            style: const TextStyle(fontSize: 13, height: 1.4)),
+                      ),
+                    ],
+                  ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 20),
               ] else
-                const SizedBox(height: 16),
+                const SizedBox(height: 20),
               ElevatedButton(
                 onPressed: _sending ? null : _envoyerDemande,
                 style: ElevatedButton.styleFrom(
-                  minimumSize: const Size.fromHeight(50),
-                  backgroundColor: Colors.black,
+                  backgroundColor: AppColors.textPrimary,
                   foregroundColor: Colors.white,
                 ),
                 child: _sending
