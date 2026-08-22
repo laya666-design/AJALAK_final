@@ -18,14 +18,21 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _index = 0;
 
+  // Clés pour pouvoir déclencher l'ouverture du formulaire d'ajout
+  // depuis le FloatingActionButton du Scaffold parent (les VehiclesScreen
+  // n'ont pas leur propre Scaffold, donc pas leur propre FAB).
+  final _voituresKey = GlobalKey<State<VehiclesScreen>>();
+  final _motosKey = GlobalKey<State<VehiclesScreen>>();
+
   @override
   Widget build(BuildContext context) {
     return ValueListenableBuilder<bool>(
       valueListenable: widget.isAr,
       builder: (context, isAr, _) {
         final screens = [
-          VehiclesScreen(config: widget.config, isAr: isAr),
+          VehiclesScreen(key: _voituresKey, config: widget.config, isAr: isAr),
           VehiclesScreen(
+            key: _motosKey,
             config: widget.config,
             isAr: isAr,
             types: const [TypeVehicule.moto, TypeVehicule.scooter],
@@ -60,6 +67,18 @@ class _HomeScreenState extends State<HomeScreen> {
               ],
             ),
             body: IndexedStack(index: _index, children: screens),
+            floatingActionButton: (_index == 0 || _index == 1)
+                ? FloatingActionButton.extended(
+                    onPressed: () {
+                      final key = _index == 0 ? _voituresKey : _motosKey;
+                      (key.currentState as dynamic)?.openAddDialog();
+                    },
+                    icon: const Icon(Icons.add),
+                    label: Text(_index == 0
+                        ? (isAr ? 'إضافة سيارة' : 'Ajouter')
+                        : (isAr ? 'إضافة دراجة' : 'Ajouter')),
+                  )
+                : null,
             bottomNavigationBar: NavigationBar(
               selectedIndex: _index,
               onDestinationSelected: (i) => setState(() => _index = i),
