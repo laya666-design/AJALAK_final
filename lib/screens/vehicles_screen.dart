@@ -60,6 +60,10 @@ class _VehiclesScreenState extends State<VehiclesScreen> {
     _refresh();
   }
 
+  /// Point d'entrée public utilisé par le FloatingActionButton de
+  /// HomeScreen (via GlobalKey) pour ouvrir le formulaire d'ajout.
+  Future<void> openAddDialog() => _openVehicleFormDialog();
+
   void _refresh() {
     setState(() => _vehicules = VehiculeService.getByTypes(widget.types));
   }
@@ -560,6 +564,3 @@ class _VehiclesScreenState extends State<VehiclesScreen> {
           ],
         ),
       ),
-    );
-  }
-}
