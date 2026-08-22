@@ -564,3 +564,6 @@ class _VehiclesScreenState extends State<VehiclesScreen> {
           ],
         ),
       ),
+    );
+  }
+}
