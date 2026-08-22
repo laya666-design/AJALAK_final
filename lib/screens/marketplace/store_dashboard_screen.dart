@@ -110,6 +110,20 @@ class _StoreDashboardScreenState extends State<StoreDashboardScreen> {
         if (profileSnap.connectionState == ConnectionState.waiting) {
           return const Scaffold(body: Center(child: CircularProgressIndicator()));
         }
+        if (profileSnap.hasError) {
+          return Scaffold(
+            body: Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Text(
+                  'Erreur de chargement du profil :\n${profileSnap.error}',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: Colors.red),
+                ),
+              ),
+            ),
+          );
+        }
         final profile = profileSnap.data;
 
         return Scaffold(
@@ -212,6 +226,18 @@ class _StoreDashboardScreenState extends State<StoreDashboardScreen> {
                                 builder: (context, snapshot) {
                                   if (snapshot.connectionState == ConnectionState.waiting) {
                                     return const Center(child: CircularProgressIndicator());
+                                  }
+                                  if (snapshot.hasError) {
+                                    return Center(
+                                      child: Padding(
+                                        padding: const EdgeInsets.all(24),
+                                        child: Text(
+                                          'Erreur de chargement des demandes :\n${snapshot.error}',
+                                          textAlign: TextAlign.center,
+                                          style: const TextStyle(color: Colors.red),
+                                        ),
+                                      ),
+                                    );
                                   }
                                   final requests = snapshot.data ?? [];
                                   if (requests.isEmpty) {
