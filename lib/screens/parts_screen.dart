@@ -73,9 +73,6 @@ class _PartsScreenState extends State<PartsScreen> {
     await launchUrl(uri, mode: LaunchMode.externalApplication);
   }
 
-  /// Ouvre l'itinéraire. Utilise l'adresse précise du magasin quand elle
-  /// est connue (fiche de contact fournie à la réponse de la demande),
-  /// sinon retombe sur une recherche par nom.
   Future<void> _itineraire(String nomMagasin, String adresse) async {
     final query = adresse.isNotEmpty
         ? Uri.encodeComponent(adresse)
@@ -85,9 +82,6 @@ class _PartsScreenState extends State<PartsScreen> {
     await launchUrl(uri, mode: LaunchMode.externalApplication);
   }
 
-  /// Diffuse réellement la demande aux magasins via Firestore (Phase 4).
-  /// Sans cet appel, le bouton "Envoyer la demande" n'atteignait aucun
-  /// magasin — c'est corrigé ici.
   Future<void> _envoyerDemande() async {
     final img = _image;
     final part = _part;
@@ -321,10 +315,6 @@ class _PartsScreenState extends State<PartsScreen> {
                 ),
               ),
               const SizedBox(height: 20),
-              // Fiche de contact des magasins qui ont répondu à la demande :
-              // apparaît uniquement une fois qu'un magasin a effectivement
-              // répondu (part.magasins n'est jamais rempli automatiquement
-              // par l'IA — voir note dans gemini_service.dart).
               if (part.magasins.isNotEmpty) ...[
                 Text(_t('Magasins qui ont répondu', 'المتاجر التي ردت'),
                     style: const TextStyle(
@@ -480,4 +470,47 @@ class _PartsScreenState extends State<PartsScreen> {
               if (part.conseils.isNotEmpty) ...[
                 const SizedBox(height: 12),
                 Container(
-         
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: AppColors.background,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: AppColors.border),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Icon(Icons.lightbulb_outline,
+                          color: AppColors.primary, size: 20),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(part.conseils,
+                            style: const TextStyle(fontSize: 13, height: 1.4)),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 20),
+              ] else
+                const SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: _sending ? null : _envoyerDemande,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.textPrimary,
+                  foregroundColor: Colors.white,
+                ),
+                child: _sending
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                            strokeWidth: 2, color: Colors.white),
+                      )
+                    : Text(_t('Envoyer la demande', 'إرسال الطلب')),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
