@@ -220,12 +220,24 @@ class _StoreDashboardScreenState extends State<StoreDashboardScreen> {
                                 ],
                               ),
                             ),
+                            Container(
+                              width: double.infinity,
+                              color: Colors.amber,
+                              padding: const EdgeInsets.all(8),
+                              child: const Text(
+                                'DEBUG: zone des demandes atteinte',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+                              ),
+                            ),
                             Expanded(
                               child: StreamBuilder<List<PartRequest>>(
                                 stream: StoreService.openRequests(),
                                 builder: (context, snapshot) {
                                   if (snapshot.connectionState == ConnectionState.waiting) {
-                                    return const Center(child: CircularProgressIndicator());
+                                    return const Center(
+                                      child: CircularProgressIndicator(color: Colors.red),
+                                    );
                                   }
                                   if (snapshot.hasError) {
                                     return Center(
@@ -234,7 +246,8 @@ class _StoreDashboardScreenState extends State<StoreDashboardScreen> {
                                         child: Text(
                                           'Erreur de chargement des demandes :\n${snapshot.error}',
                                           textAlign: TextAlign.center,
-                                          style: const TextStyle(color: Colors.red),
+                                          style: const TextStyle(
+                                              color: Colors.red, fontWeight: FontWeight.bold),
                                         ),
                                       ),
                                     );
@@ -243,7 +256,7 @@ class _StoreDashboardScreenState extends State<StoreDashboardScreen> {
                                   if (requests.isEmpty) {
                                     return const Center(
                                         child: Text('Aucune commande pour le moment.',
-                                            style: TextStyle(color: AppColors.textSecondary)));
+                                            style: TextStyle(color: Colors.black, fontSize: 16)));
                                   }
                                   return ListView.builder(
                                     padding: const EdgeInsets.all(12),
